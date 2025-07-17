@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – aktuálny snímok</title>
+  <title>Radar zrazok</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -36,12 +36,19 @@
       width: 45px;
       height: 45px;
       border-radius: 50%;
-      font-size: 20px;
       cursor: pointer;
       transition: background 0.2s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     #controls button:hover {
       background: #155A9C;
+    }
+    #controls svg {
+      width: 22px;
+      height: 22px;
+      fill: white;
     }
     #timeBox {
       position: fixed;
@@ -83,8 +90,18 @@
 <div id="map"></div>
 
 <div id="controls">
-  <button id="refresh">🔄</button>
-  <button id="close">✖</button>
+  <button id="back">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6L11 18zm1-12v12l8.5-6L12 6z"/></svg>
+  </button>
+  <button id="play">
+    <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+  <button id="next">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 6v12l8.5-6L5 6zm9 0v12l8.5-6L14 6z"/></svg>
+  </button>
+  <button id="refresh">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+  </button>
 </div>
 <div id="timeBox">Načítavam čas...</div>
 
@@ -111,7 +128,10 @@
       map.fitBounds(geo.getBounds().pad(0.25));
     });
 
-  let radarLayer;
+  let radarFrames = [];
+  let radarLayers = [];
+  let currentIndex = 0;
+  let playInterval = null;
   const timeBox = document.getElementById("timeBox");
 
   function formatDate(timestamp) {
@@ -120,32 +140,64 @@
     return `${days[date.getDay()]} ${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()} o ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   }
 
-  function loadLastFrame() {
-    if (radarLayer) map.removeLayer(radarLayer);
+  function fadeToFrame(index) {
+    radarLayers.forEach((layer, i) => {
+      layer.setOpacity(i === index ? 0.8 : 0);
+    });
+    timeBox.textContent = formatDate(radarFrames[index].time);
+  }
+
+  function loadRadar() {
+    radarLayers.forEach(layer => map.removeLayer(layer));
+    radarLayers = [];
 
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(r => r.json())
       .then(data => {
-        const lastFrame = data.radar.past[data.radar.past.length - 1]; // ✅ posledný reálny snímok
-        radarLayer = L.tileLayer(
-          `https://tilecache.rainviewer.com/v2/radar/${lastFrame.path}/256/{z}/{x}/{y}/4/1_1.png`,
-          {opacity: 0.8}
-        ).addTo(map);
-        timeBox.textContent = formatDate(lastFrame.time);
+        radarFrames = data.radar.past;
+        currentIndex = radarFrames.length - 1;
+
+        radarFrames.forEach((frame, i) => {
+          const layer = L.tileLayer(
+            `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/4/1_1.png`,
+            {opacity: 0}
+          ).addTo(map);
+          radarLayers[i] = layer;
+        });
+
+        fadeToFrame(currentIndex);
       });
   }
 
-  // ✅ Načítaj hneď pri spustení
-  loadLastFrame();
+  // ✅ Načítanie pri spustení
+  loadRadar();
 
   // ✅ Ovládanie
-  document.getElementById("refresh").onclick = () => loadLastFrame();
-  document.getElementById("close").onclick = () => {
-    if (radarLayer) map.removeLayer(radarLayer);
-    document.getElementById("controls").style.display = "none";
-    timeBox.style.display = "none";
-    document.getElementById("attribution").style.display = "none";
+  document.getElementById("back").onclick = () => {
+    currentIndex = (currentIndex - 1 + radarFrames.length) % radarFrames.length;
+    fadeToFrame(currentIndex);
   };
+
+  document.getElementById("next").onclick = () => {
+    currentIndex = (currentIndex + 1) % radarFrames.length;
+    fadeToFrame(currentIndex);
+  };
+
+  document.getElementById("play").onclick = () => {
+    if (playInterval) {
+      clearInterval(playInterval);
+      playInterval = null;
+      document.getElementById("playIcon").setAttribute("d","M8 5v14l11-7z"); // ▶
+    } else {
+      playInterval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % radarFrames.length;
+        fadeToFrame(currentIndex);
+      }, 500);
+      document.getElementById("playIcon").setAttribute("d","M6 19h4V5H6v14zm8-14v14h4V5h-4z"); // ⏸
+    }
+  };
+
+  document.getElementById("refresh").onclick = () => loadRadar();
 </script>
 </body>
 </html>
