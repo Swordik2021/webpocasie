@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – radar so zmenenými farbami</title>
+  <title>Slovensko – radar s vlastnými farbami</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -16,10 +16,10 @@
       display: none;
     }
 
-    /* ✅ Globálna zmena farieb radarových dlaždíc */
+    /* ✅ Vlastný filter na radar */
     .custom-radar-tile {
-      filter: hue-rotate(180deg) saturate(2) brightness(1.2); 
-      /* ⬆️ Príklad: posun farieb do modro-fialovej, vyššia sýtosť a jas */
+      filter: hue-rotate(320deg) saturate(3) brightness(1.3) contrast(1.4);
+      /* Experimentuj s týmito hodnotami, aby si dostal presne tvoje odtiene */
     }
   </style>
 </head>
@@ -32,13 +32,13 @@
       attributionControl: false
     });
 
-    // ✅ Tmavý podklad
+    // Tmavý podklad
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 19
     }).addTo(map);
 
-    // ✅ Hranice Slovenska
+    // Hranice Slovenska
     fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
@@ -53,22 +53,21 @@
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // ✅ Radar RainViewer s vlastným CSS filtrom
+    // ✅ Radar bez rozmazaných okrajov (1_0.png)
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(response => response.json())
       .then(data => {
         let lastRadar = data.radar.past[data.radar.past.length - 1];
         let radarLayer = L.tileLayer(
-          `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/2/1_1.png`,
+          `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/2/1_0.png`, 
           {
             opacity: 0.7,
             zIndex: 10
           }
         );
-
         radarLayer.addTo(map);
 
-        // ✅ Pridanie triedy na všetky radarové dlaždice (pre CSS filter)
+        // ✅ Aplikovanie filtra na všetky tiles
         radarLayer.on('tileload', function(e) {
           e.tile.classList.add("custom-radar-tile");
         });
