@@ -32,14 +32,16 @@
     #controls button {
       background: #0D3F73;
       border: none;
-      width: 45px;
-      height: 45px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       cursor: pointer;
       transition: background 0.2s;
       display: flex;
       justify-content: center;
       align-items: center;
+      color: white;
+      font-size: 22px;
     }
     #controls button:hover {
       background: #155A9C;
@@ -93,7 +95,7 @@
   <button id="play"><img id="playIcon" src="https://img.icons8.com/ios-filled/50/play.png"></button>
   <button id="next"><img src="https://img.icons8.com/ios-filled/50/fast-forward.png"></button>
   <button id="refresh"><img src="https://img.icons8.com/ios-filled/50/synchronize.png"></button>
-  <button id="lightning"><img src="https://img.icons8.com/ios-filled/50/flash.png"></button>
+  <button id="lightning">⚡</button>
 </div>
 <div id="timeBox">Načítavam čas...</div>
 
@@ -199,7 +201,7 @@
     if (!lightningVisible) {
       lightningLayer = L.tileLayer(
         "https://tiles.lightningmaps.org/blitzortung/lightning/{z}/{x}/{y}.png",
-        {opacity: 0.9, tileSize: 256}
+        {opacity: 1, tileSize: 256}
       ).addTo(map);
       lightningVisible = true;
     } else {
