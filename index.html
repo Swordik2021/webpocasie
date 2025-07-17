@@ -19,10 +19,7 @@
   }).addTo(map);
 
   fetch('slovakia_Districts_level_2.geojson')
-    .then(r => {
-      if (!r.ok) throw new Error('Chyba načítania GeoJSON');
-      return r.json();
-    })
+    .then(r => r.json())
     .then(data => {
       L.geoJSON(data, {
         style: {
@@ -30,10 +27,9 @@
           weight: 1.5,
           fillOpacity: 0.05
         }
-        // ⬆️ Žiadny onEachFeature, takže sa nič nezobrazí pri kliknutí
       }).addTo(map);
     })
-    .catch(err => console.error(err));
+    .catch(err => console.error("Chyba načítania:", err));
 </script>
 </body>
 </html>
