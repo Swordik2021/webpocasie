@@ -2,20 +2,31 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – bledomodré hranice</title>
+  <title>Slovensko – čistá mapa</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    #map { height: 100vh; width: 100%; }
+    html, body, #map {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    .leaflet-control-zoom,
+    .leaflet-control-attribution {
+      display: none; /* ✅ skryje +/– aj nápis Leaflet */
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    var map = L.map('map');
+    var map = L.map('map', {
+      zoomControl: false,  // ✅ vypne +/–
+      attributionControl: false // ✅ vypne logo Leaflet
+    });
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OSM contributors &copy; CARTO',
       subdomains: 'abcd',
       maxZoom: 19
     }).addTo(map);
@@ -25,14 +36,13 @@
       .then(data => {
         let geoLayer = L.geoJSON(data, {
           style: {
-            color: "#66b3ff",   // bledomodrá
-            weight: 1.5,        // tenšie čiary
-            fillOpacity: 0      // žiadna výplň
+            color: "#66b3ff",  // bledomodré hranice
+            weight: 1.5,
+            fillOpacity: 0
           }
         }).addTo(map);
 
-        // ✅ Automatické zameranie na Slovensko podľa hraníc
-        map.fitBounds(geoLayer.getBounds());
+        map.fitBounds(geoLayer.getBounds()); // ✅ zameranie na Slovensko
       })
       .catch(err => console.error("Chyba pri načítaní GeoJSON:", err));
   </script>
