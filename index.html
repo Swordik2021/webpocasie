@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – plynulé posúvanie</title>
+  <title>Radar – finálna verzia</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -84,24 +84,24 @@
 <script>
   const map = L.map('map', {zoomControl: false, attributionControl: false});
 
+  // ✅ Tmavý podklad
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     subdomains: 'abcd', maxZoom: 14
   }).addTo(map);
 
-  // ✅ Modré hranice Slovenska + správne priblíženie
+  // ✅ Modré hranice Slovenska + ideálne priblíženie
   fetch("slovakia_Regions_level_1.geojson")
     .then(r => r.json())
     .then(data => {
       const geo = L.geoJSON(data, {
         style: {color: "#00bfff", weight: 1.5, fillOpacity: 0}
       }).addTo(map);
-      map.fitBounds(geo.getBounds().pad(0.1));
+      map.fitBounds(geo.getBounds().pad(0.25)); // 🔥 viac priestoru okolo Slovenska
     });
 
-  // ✅ Radar – prednačítanie všetkých snímok
+  // ✅ Radar – prednačítanie snímok
   let radarFrames = [];
   let radarLayers = [];
-  let currentIndex = 0;
   let playInterval = null;
 
   const slider = document.getElementById("slider");
@@ -115,7 +115,7 @@
       slider.max = radarFrames.length - 1;
       slider.value = radarFrames.length - 1;
 
-      // ✅ Prednačítanie všetkých vrstiev dopredu
+      // ✅ Prednačítame všetky vrstvy hneď
       radarFrames.forEach((frame, i) => {
         const layer = L.tileLayer(
           `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
@@ -143,7 +143,7 @@
           playInterval = setInterval(() => {
             slider.value = (parseInt(slider.value) + 1) % radarFrames.length;
             showFrame(slider.value);
-          }, 500); // 🔥 rýchle prehrávanie
+          }, 500); // rýchle prehrávanie
         }
       });
 
