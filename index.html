@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar + Blesky (OWM)</title>
+  <title>Radar zrazok</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -32,16 +32,14 @@
     #controls button {
       background: #0D3F73;
       border: none;
-      width: 50px;
-      height: 50px;
+      width: 45px;
+      height: 45px;
       border-radius: 50%;
       cursor: pointer;
       transition: background 0.2s;
       display: flex;
       justify-content: center;
       align-items: center;
-      color: white;
-      font-size: 22px;
     }
     #controls button:hover {
       background: #155A9C;
@@ -95,14 +93,12 @@
   <button id="play"><img id="playIcon" src="https://img.icons8.com/ios-filled/50/play.png"></button>
   <button id="next"><img src="https://img.icons8.com/ios-filled/50/fast-forward.png"></button>
   <button id="refresh"><img src="https://img.icons8.com/ios-filled/50/synchronize.png"></button>
-  <button id="lightning">⚡</button>
 </div>
 <div id="timeBox">Načítavam čas...</div>
 
 <div id="attribution">
   Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &amp;
-  <a href="https://www.rainviewer.com" target="_blank">RainViewer</a> &amp;
-  Blesky © <a href="https://openweathermap.org/" target="_blank">OpenWeatherMap</a>
+  <a href="https://www.rainviewer.com" target="_blank">RainViewer</a>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -150,7 +146,8 @@
       .then(r => r.json())
       .then(data => {
         radarFrames = data.radar.past.concat(data.radar.nowcast);
-        currentIndex = data.radar.past.length - 1; // posledný reálny snímok
+        // ✅ vždy posledný REÁLNY snímok (posledný z past)
+        currentIndex = data.radar.past.length - 1;
 
         radarFrames.forEach((frame, i) => {
           const layer = L.tileLayer(
@@ -164,9 +161,10 @@
       });
   }
 
+  // ✅ Načítanie pri spustení
   loadRadar();
 
-  // ✅ Ovládanie radaru
+  // ✅ Ovládanie
   document.getElementById("back").onclick = () => {
     currentIndex = (currentIndex - 1 + radarFrames.length) % radarFrames.length;
     fadeToFrame(currentIndex);
@@ -192,23 +190,6 @@
   };
 
   document.getElementById("refresh").onclick = () => loadRadar();
-
-  // ✅ Blesky (prepínač – OpenWeatherMap)
-  let lightningLayer = null;
-  let lightningVisible = false;
-
-  document.getElementById("lightning").onclick = () => {
-    if (!lightningVisible) {
-      lightningLayer = L.tileLayer(
-        "https://maps.openweathermap.org/maps/2.0/radar/0/PAST/{z}/{x}/{y}?appid=439d4b804bc8187953eb36d2a8c26a02",
-        {opacity: 1, tileSize: 256}
-      ).addTo(map);
-      lightningVisible = true;
-    } else {
-      map.removeLayer(lightningLayer);
-      lightningVisible = false;
-    }
-  };
 </script>
 </body>
 </html>
