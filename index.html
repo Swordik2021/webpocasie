@@ -146,8 +146,8 @@
       .then(r => r.json())
       .then(data => {
         radarFrames = data.radar.past.concat(data.radar.nowcast);
-        // ✅ vždy aktuálny snímok (posledný)
-        currentIndex = radarFrames.length - 1;
+        // ✅ vždy posledný REÁLNY snímok (posledný z past)
+        currentIndex = data.radar.past.length - 1;
 
         radarFrames.forEach((frame, i) => {
           const layer = L.tileLayer(
