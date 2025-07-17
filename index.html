@@ -20,7 +20,7 @@
       maxZoom: 19
     }).addTo(map);
 
-    fetch("slovakia_Regions_level_1.geojson")
+    fetch("slovakia_Regions_level_2.geojson")
       .then(response => response.json())
       .then(data => {
         L.geoJSON(data, {
