@@ -22,7 +22,7 @@
       maxZoom: 19
     }).addTo(map);
 
-    // Načítanie GeoJSON
+    // Načítanie GeoJSON – bez popupov
     fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
@@ -32,10 +32,6 @@
             weight: 2,
             fillColor: "orange",
             fillOpacity: 0.3
-          },
-          onEachFeature: function (feature, layer) {
-            let regionName = feature.properties.shape1 || "Neznámy";
-            layer.bindPopup("<b>Región:</b> " + regionName);
           }
         }).addTo(map);
       })
