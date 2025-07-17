@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – Slovensko s odstupom</title>
+  <title>Radar – animácia</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -15,10 +15,36 @@
     .leaflet-control-attribution {
       display: none;
     }
+    #controls {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.5);
+      padding: 8px;
+      border-radius: 5px;
+      color: white;
+      font-family: sans-serif;
+    }
+    input[type=range] {
+      width: 300px;
+    }
+    button {
+      background: white;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="controls">
+  <button id="play">▶</button>
+  <input type="range" id="slider" min="0" max="0" value="0">
+  <span id="time"></span>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   const map = L.map('map', {zoomControl: false, attributionControl: false});
@@ -28,25 +54,63 @@
     subdomains: 'abcd', maxZoom: 12
   }).addTo(map);
 
-  // ✅ Modré hranice Slovenska (s odstupom)
+  // ✅ Modré hranice Slovenska
   fetch("slovakia_Regions_level_1.geojson")
     .then(r => r.json())
     .then(data => {
       const geo = L.geoJSON(data, {
         style: {color: "#00bfff", weight: 1.5, fillOpacity: 0}
       }).addTo(map);
-      map.fitBounds(geo.getBounds().pad(0.3)); // 🔥 30 % priestoru okolo Slovenska
+      map.fitBounds(geo.getBounds().pad(0.3));
     });
 
-  // ✅ Radar RainViewer
+  // ✅ Radar s animáciou
+  let radarFrames = [];
+  let currentLayer = null;
+  let playInterval = null;
+
   fetch("https://api.rainviewer.com/public/weather-maps.json")
     .then(r => r.json())
     .then(data => {
-      const lastRadar = data.radar.past.pop();
-      L.tileLayer(
-        `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/2/1_1.png`,
-        {opacity: 0.8}
-      ).addTo(map);
+      radarFrames = [...data.radar.past, ...data.radar.nowcast];
+      const slider = document.getElementById("slider");
+      const timeLabel = document.getElementById("time");
+      slider.max = radarFrames.length - 1;
+      slider.value = radarFrames.length - 1;
+      showFrame(slider.value);
+
+      slider.addEventListener("input", () => {
+        showFrame(slider.value);
+      });
+
+      document.getElementById("play").addEventListener("click", () => {
+        if (playInterval) {
+          clearInterval(playInterval);
+          playInterval = null;
+          document.getElementById("play").innerText = "▶";
+        } else {
+          document.getElementById("play").innerText = "⏸";
+          playInterval = setInterval(() => {
+            slider.value = (parseInt(slider.value) + 1) % radarFrames.length;
+            showFrame(slider.value);
+          }, 500);
+        }
+      });
+
+      function showFrame(index) {
+        const frame = radarFrames[index];
+        if (!frame) return;
+
+        if (currentLayer) map.removeLayer(currentLayer);
+        currentLayer = L.tileLayer(
+          `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+          {opacity: 0.8}
+        ).addTo(map);
+
+        const t = new Date(frame.time * 1000);
+        timeLabel.innerText = t.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) +
+                              " " + t.toLocaleDateString();
+      }
     });
 </script>
 </body>
