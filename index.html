@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – aktuálny snímok</title>
+  <title>Radar + Blesky</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -93,12 +93,14 @@
   <button id="play"><img id="playIcon" src="https://img.icons8.com/ios-filled/50/play.png"></button>
   <button id="next"><img src="https://img.icons8.com/ios-filled/50/fast-forward.png"></button>
   <button id="refresh"><img src="https://img.icons8.com/ios-filled/50/synchronize.png"></button>
+  <button id="lightning"><img src="https://img.icons8.com/ios-filled/50/flash.png"></button>
 </div>
 <div id="timeBox">Načítavam čas...</div>
 
 <div id="attribution">
   Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &amp;
-  <a href="https://www.rainviewer.com" target="_blank">RainViewer</a>
+  <a href="https://www.rainviewer.com" target="_blank">RainViewer</a> &amp;
+  <a href="https://www.lightningmaps.org" target="_blank">LightningMaps.org</a>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -146,8 +148,7 @@
       .then(r => r.json())
       .then(data => {
         radarFrames = data.radar.past.concat(data.radar.nowcast);
-        // ✅ vždy posledný REÁLNY snímok (posledný z past)
-        currentIndex = data.radar.past.length - 1;
+        currentIndex = data.radar.past.length - 1; // vždy reálny snímok
 
         radarFrames.forEach((frame, i) => {
           const layer = L.tileLayer(
@@ -190,6 +191,23 @@
   };
 
   document.getElementById("refresh").onclick = () => loadRadar();
+
+  // ✅ Blesky (voliteľná vrstva)
+  let lightningLayer = null;
+  let lightningVisible = false;
+
+  document.getElementById("lightning").onclick = () => {
+    if (lightningVisible) {
+      map.removeLayer(lightningLayer);
+      lightningVisible = false;
+    } else {
+      lightningLayer = L.tileLayer(
+        "https://tiles.lightningmaps.org/blitzortung/geo/{z}/{x}/{y}.png",
+        {opacity: 0.8}
+      ).addTo(map);
+      lightningVisible = true;
+    }
+  };
 </script>
 </body>
 </html>
