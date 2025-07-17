@@ -101,8 +101,7 @@
 
 <div id="attribution">
   Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &amp;
-  <a href="https://www.rainviewer.com" target="_blank">RainViewer</a> &amp;
-  <a href="https://www.lightningmaps.org" target="_blank">LightningMaps.org</a>
+  <a href="https://www.rainviewer.com" target="_blank">RainViewer</a>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -150,7 +149,7 @@
       .then(r => r.json())
       .then(data => {
         radarFrames = data.radar.past.concat(data.radar.nowcast);
-        currentIndex = data.radar.past.length - 1; // aktuálny snímok
+        currentIndex = data.radar.past.length - 1; // posledný reálny snímok
 
         radarFrames.forEach((frame, i) => {
           const layer = L.tileLayer(
@@ -166,7 +165,7 @@
 
   loadRadar();
 
-  // ✅ Ovládanie
+  // ✅ Ovládanie radaru
   document.getElementById("back").onclick = () => {
     currentIndex = (currentIndex - 1 + radarFrames.length) % radarFrames.length;
     fadeToFrame(currentIndex);
@@ -193,15 +192,15 @@
 
   document.getElementById("refresh").onclick = () => loadRadar();
 
-  // ✅ Blesky (prepínač)
+  // ✅ Blesky (prepínač – RainViewer tileserver)
   let lightningLayer = null;
   let lightningVisible = false;
 
   document.getElementById("lightning").onclick = () => {
     if (!lightningVisible) {
       lightningLayer = L.tileLayer(
-        "https://tiles.lightningmaps.org/blitzortung/lightning/{z}/{x}/{y}.png",
-        {opacity: 1, tileSize: 256}
+        "https://tilecache.rainviewer.com/v2/lightning/last/256/{z}/{x}/{y}/2/1_1.png",
+        {opacity: 1}
       ).addTo(map);
       lightningVisible = true;
     } else {
