@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – zelená/žltá/červená paleta</title>
+  <title>Radar – rovnaké farby ako kamarát</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -38,7 +38,7 @@
       map.fitBounds(geo.getBounds().pad(0.25));
     });
 
-  // ✅ RainViewer – paleta 3 (zelená, žltá, červená)
+  // ✅ RainViewer s paletou „3“ (rovnaká ako na druhom obrázku)
   fetch("https://api.rainviewer.com/public/weather-maps.json")
     .then(r => r.json())
     .then(data => {
