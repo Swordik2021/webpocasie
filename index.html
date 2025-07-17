@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – plynulé snímky</title>
+  <title>Radar – plynulé prechody</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -82,14 +82,13 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ✅ Presné priblíženie Slovenska (bližšie)
   const map = L.map('map', {zoomControl: false, attributionControl: false})
                .setView([48.7, 19.7], 7.2);
 
   // ✅ Tmavý podklad
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     subdomains: 'abcd',
-    maxZoom: 14 // 🔥 radar nebude miznúť pri väčšom priblížení
+    maxZoom: 14
   }).addTo(map);
 
   // ✅ Modré hranice Slovenska
@@ -101,9 +100,10 @@
       }).addTo(map);
     });
 
-  // ✅ Radar s animáciou
+  // ✅ Radar s plynulými prechodmi
   let radarFrames = [];
   let currentLayer = null;
+  let nextLayer = null;
   let playInterval = null;
   const slider = document.getElementById("slider");
   const timeLabel = document.getElementById("time");
@@ -115,7 +115,7 @@
       radarFrames = [...data.radar.past, ...data.radar.nowcast];
       slider.max = radarFrames.length - 1;
       slider.value = radarFrames.length - 1;
-      showFrame(slider.value);
+      showFrame(slider.value, true);
 
       slider.addEventListener("input", () => {
         clearInterval(playInterval);
@@ -142,28 +142,39 @@
         const frame = radarFrames[index];
         if (!frame) return;
 
-        const nextLayer = L.tileLayer(
+        // ✅ Novú vrstvu pridáme s opacity 0 a potom plynulo zväčšíme
+        nextLayer = L.tileLayer(
           `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
           {opacity: 0}
         ).addTo(map);
 
         nextLayer.on("load", () => {
-          // ✅ plynulý fade (miznutie starej a zobrazenie novej)
           if (currentLayer) {
-            let oldLayer = currentLayer;
-            let opacity = 0.7;
-            const fadeOut = setInterval(() => {
-              opacity -= 0.1;
-              if (opacity <= 0) {
-                clearInterval(fadeOut);
-                map.removeLayer(oldLayer);
+            let fadeOut = currentLayer;
+            let opacityOut = fadeOut.options.opacity;
+            const fadeOutInterval = setInterval(() => {
+              opacityOut -= 0.1;
+              if (opacityOut <= 0) {
+                clearInterval(fadeOutInterval);
+                map.removeLayer(fadeOut);
               } else {
-                oldLayer.setOpacity(opacity);
+                fadeOut.setOpacity(opacityOut);
               }
             }, 50);
           }
+
+          // ✅ Fade-in novej vrstvy
+          let opacityIn = 0;
+          const fadeInInterval = setInterval(() => {
+            opacityIn += 0.1;
+            if (opacityIn >= (sliderMode ? 1 : 0.7)) {
+              opacityIn = (sliderMode ? 1 : 0.7);
+              clearInterval(fadeInInterval);
+            }
+            nextLayer.setOpacity(opacityIn);
+          }, 50);
+
           currentLayer = nextLayer;
-          currentLayer.setOpacity(sliderMode ? 1 : 0.7);
         });
 
         const t = new Date(frame.time * 1000);
