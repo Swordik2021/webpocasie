@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – čisté zrážky</title>
+  <title>Radar – čisté zrážky (funkčný)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -115,14 +115,21 @@
       slider.max = radarFrames.length - 1;
       slider.value = radarFrames.length - 1;
 
-      // ✅ Prednačítame všetky vrstvy hneď
       radarFrames.forEach((frame, i) => {
-        const layer = L.tileLayer(
-          // 🔥 0 = len čisté zrážky (bez oblačnosti)
+        // ✅ Skúsime mód 0 (čisté zrážky), ak nebude fungovať, padneme na mód 2
+        const testLayer = L.tileLayer(
           `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/0/1_1.png`,
           {opacity: 0}
-        ).addTo(map);
-        radarLayers[i] = layer;
+        );
+
+        testLayer.on("tileerror", () => {
+          testLayer.setUrl(
+            `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`
+          );
+        });
+
+        testLayer.addTo(map);
+        radarLayers[i] = testLayer;
       });
 
       showFrame(slider.value);
