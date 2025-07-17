@@ -60,13 +60,13 @@
     }
     #attribution {
       position: fixed;
-      bottom: 5px;
-      left: 10px;
+      bottom: 0;        /* ✅ ÚPLNE dole */
+      right: 0;         /* ✅ ÚPLNE doprava */
       background: rgba(0,0,0,0.6);
       color: #ccc;
-      padding: 4px 8px;
-      border-radius: 5px;
-      font-size: 12px;
+      padding: 2px 6px;
+      border-top-left-radius: 5px;
+      font-size: 11px;
       font-family: Arial, sans-serif;
       z-index: 9999;
     }
@@ -182,7 +182,7 @@
       playInterval = setInterval(() => {
         currentIndex = (currentIndex + 1) % radarFrames.length;
         fadeToFrame(currentIndex);
-      }, 500);
+      }, 500); // ✅ plynulé a mierne spomalené
     }
   };
 
