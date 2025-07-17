@@ -58,6 +58,25 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
       font-family: Arial, sans-serif;
     }
+    #attribution {
+      position: fixed;
+      bottom: 5px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      color: #ccc;
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+      z-index: 9999;
+    }
+    #attribution a {
+      color: #66b3ff;
+      text-decoration: none;
+    }
+    #attribution a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -71,6 +90,11 @@
   <button id="close">✖</button>
 </div>
 <div id="timeBox">Načítavam čas...</div>
+
+<div id="attribution">
+  Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &amp;
+  <a href="https://www.rainviewer.com" target="_blank">RainViewer</a>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -158,7 +182,7 @@
       playInterval = setInterval(() => {
         currentIndex = (currentIndex + 1) % radarFrames.length;
         fadeToFrame(currentIndex);
-      }, 500); // ✅ spomalené a plynulé
+      }, 500);
     }
   };
 
@@ -167,6 +191,7 @@
     radarLayers.forEach(layer => map.removeLayer(layer));
     document.getElementById("controls").style.display = "none";
     timeBox.style.display = "none";
+    document.getElementById("attribution").style.display = "none";
   };
 </script>
 </body>
