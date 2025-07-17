@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – len obrys bez knižníc</title>
+  <title>Slovensko – bledomodré hranice</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #map { height: 100vh; width: 100%; }
@@ -23,16 +23,11 @@
     fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
-        // ✅ Nájdeme polygon s najväčšou plochou (pravdepodobne celý obvod)
-        let biggest = data.features.reduce((a, b) => {
-          return JSON.stringify(a).length > JSON.stringify(b).length ? a : b;
-        });
-
-        L.geoJSON(biggest, {
+        L.geoJSON(data, {
           style: {
-            color: "blue",   // modré hranice
-            weight: 2,
-            fillOpacity: 0   // žiadna výplň
+            color: "#66b3ff",   // ✅ bledomodrá
+            weight: 1.5,        // tenšie čiary
+            fillOpacity: 0      // žiadna výplň
           }
         }).addTo(map);
       })
