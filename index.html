@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – radar s farbami RainViewer</title>
+  <title>Slovensko – originálne farby RainViewer</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -46,27 +46,22 @@
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // ✅ Presná paleta RainViewer
-    function getColor(value) {
-      return value > 100 ? '#c800ff' :  // fialová
-             value > 80  ? '#ff0000' :  // červená
-             value > 60  ? '#ff9000' :  // oranžová
-             value > 40  ? '#ffd800' :  // žltá
-             value > 20  ? '#28a745' :  // zelená
-             value > 5   ? '#a3f600' :  // svetlozelená
-                           'transparent';
+    // ✅ Presná paleta RainViewer (zo zdrojového kódu RainViewer)
+    const rainColors = [
+      [0,   0,   0,   0],      // transparent
+      [163, 246,   0, 200],    // svetlozelená
+      [40,  167,  69, 200],    // zelená
+      [255, 216,   0, 200],    // žltá
+      [255, 144,   0, 220],    // oranžová
+      [255,   0,   0, 230],    // červená
+      [200,   0, 255, 230]     // fialová (najsilnejšie)
+    ];
+
+    function getColorByIndex(index) {
+      return rainColors[Math.min(index, rainColors.length - 1)];
     }
 
-    function hexToRgb(hex) {
-      var bigint = parseInt(hex.slice(1), 16);
-      return {
-        r: (bigint >> 16) & 255,
-        g: (bigint >> 8) & 255,
-        b: bigint & 255
-      };
-    }
-
-    // ✅ Canvas Overlay bez halo
+    // ✅ Canvas Overlay – správne dekódovanie indexu
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(response => response.json())
       .then(data => {
@@ -90,16 +85,17 @@
             var imgData = ctx.getImageData(0, 0, size.x, size.y);
 
             for (let i = 0; i < imgData.data.length; i += 4) {
-              let intensity = Math.max(imgData.data[i], imgData.data[i + 1], imgData.data[i + 2]);
+              // ✅ RainViewer kóduje intenzitu do RED kanála (0–255)
+              let index = Math.floor(imgData.data[i] / 42); 
+              let color = getColorByIndex(index);
 
-              if (intensity < 5) {
-                imgData.data[i + 3] = 0; // úplne priehľadné slabé halo
+              if (color[3] === 0) {
+                imgData.data[i + 3] = 0;
               } else {
-                let rgb = hexToRgb(getColor(intensity));
-                imgData.data[i] = rgb.r;
-                imgData.data[i + 1] = rgb.g;
-                imgData.data[i + 2] = rgb.b;
-                imgData.data[i + 3] = 220; // priehľadnosť
+                imgData.data[i] = color[0];
+                imgData.data[i + 1] = color[1];
+                imgData.data[i + 2] = color[2];
+                imgData.data[i + 3] = color[3];
               }
             }
             ctx.putImageData(imgData, 0, 0);
