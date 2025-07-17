@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – Regions z GeoJSON</title>
+  <title>Slovensko – Regióny z GeoJSON</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #map { height: 100vh; width: 100%; }
@@ -15,7 +15,7 @@
     // Inicializácia mapy
     var map = L.map('map').setView([48.7, 19.7], 7);
 
-    // Tmavý podklad (CARTO)
+    // Tmavý podklad
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OSM contributors &copy; CARTO',
       subdomains: 'abcd',
@@ -34,9 +34,8 @@
             fillOpacity: 0.3
           },
           onEachFeature: function (feature, layer) {
-            if (feature.properties) {
-              layer.bindPopup("<b>Región:</b> " + (feature.properties.name || "Neznámy"));
-            }
+            let regionName = feature.properties.shape1 || "Neznámy";
+            layer.bindPopup("<b>Región:</b> " + regionName);
           }
         }).addTo(map);
       })
