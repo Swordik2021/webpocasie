@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – Kraje z GeoJSON</title>
+  <title>Slovensko – len obrys</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #map { height: 100vh; width: 100%; }
@@ -25,9 +25,9 @@
       .then(data => {
         L.geoJSON(data, {
           style: {
-            color: "blue",     // ✅ modré hranice
-            weight: 2,         // hrúbka čiar
-            fillOpacity: 0     // ✅ žiadna výplň
+            color: "blue",    // modré hranice
+            weight: 1.5,      // tenšie čiary
+            fillOpacity: 0    // žiadna výplň
           }
         }).addTo(map);
       })
