@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – finálna verzia</title>
+  <title>Radar – čisté zrážky</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -96,7 +96,7 @@
       const geo = L.geoJSON(data, {
         style: {color: "#00bfff", weight: 1.5, fillOpacity: 0}
       }).addTo(map);
-      map.fitBounds(geo.getBounds().pad(0.25)); // 🔥 viac priestoru okolo Slovenska
+      map.fitBounds(geo.getBounds().pad(0.25));
     });
 
   // ✅ Radar – prednačítanie snímok
@@ -118,7 +118,8 @@
       // ✅ Prednačítame všetky vrstvy hneď
       radarFrames.forEach((frame, i) => {
         const layer = L.tileLayer(
-          `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+          // 🔥 0 = len čisté zrážky (bez oblačnosti)
+          `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/0/1_1.png`,
           {opacity: 0}
         ).addTo(map);
         radarLayers[i] = layer;
@@ -143,7 +144,7 @@
           playInterval = setInterval(() => {
             slider.value = (parseInt(slider.value) + 1) % radarFrames.length;
             showFrame(slider.value);
-          }, 500); // rýchle prehrávanie
+          }, 500);
         }
       });
 
