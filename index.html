@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – originálne farby radar</title>
+  <title>Slovensko – originálny radar RainViewer</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -46,71 +46,18 @@
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // ✅ Presná originálna paleta RainViewer (bez úprav)
-    const rainviewerColors = [
-      [0, 0, 0, 0],          // transparent
-      [4, 233, 231, 255],    // light drizzle
-      [0, 180, 255, 255],    // drizzle
-      [0, 111, 255, 255],    // light rain
-      [0, 255, 0, 255],      // moderate rain
-      [0, 200, 0, 255],      // heavy rain
-      [255, 255, 0, 255],    // very heavy rain
-      [255, 160, 0, 255],    // shower
-      [255, 0, 0, 255],      // storm
-      [180, 0, 104, 255],    // hail
-      [255, 255, 255, 255]   // extreme hail
-    ];
-
-    function getColorByIndex(index) {
-      return rainviewerColors[Math.min(index, rainviewerColors.length - 1)];
-    }
-
-    // ✅ Canvas Overlay s ostrými hranami
+    // ✅ Originálny radar RainViewer (žiadne úpravy)
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(response => response.json())
       .then(data => {
         let lastRadar = data.radar.past[data.radar.past.length - 1];
-
-        var radarLayer = L.tileLayer('', {
-          opacity: 0.9
-        });
-
-        radarLayer.createTile = function(coords) {
-          var tile = document.createElement('canvas');
-          var size = this.getTileSize();
-          tile.width = size.x;
-          tile.height = size.y;
-          var ctx = tile.getContext('2d');
-
-          var img = new Image();
-          img.crossOrigin = "Anonymous";
-          img.onload = function() {
-            ctx.drawImage(img, 0, 0);
-            var imgData = ctx.getImageData(0, 0, size.x, size.y);
-
-            for (let i = 0; i < imgData.data.length; i += 4) {
-              let value = imgData.data[i]; 
-              // index 0-10, ostré orezanie
-              let index = Math.floor(value / 25.5); 
-
-              if (index === 0) {
-                imgData.data[i + 3] = 0;
-              } else {
-                let color = getColorByIndex(index);
-                imgData.data[i] = color[0];
-                imgData.data[i + 1] = color[1];
-                imgData.data[i + 2] = color[2];
-                imgData.data[i + 3] = color[3];
-              }
-            }
-            ctx.putImageData(imgData, 0, 0);
-          };
-
-          img.src = `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/${coords.z}/${coords.x}/${coords.y}/2/1_0.png`;
-          return tile;
-        };
-
-        radarLayer.addTo(map);
+        L.tileLayer(
+          `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/2/1_1.png`,
+          {
+            opacity: 0.8,
+            zIndex: 10
+          }
+        ).addTo(map);
       });
   </script>
 </body>
