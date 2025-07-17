@@ -148,7 +148,7 @@
       .then(r => r.json())
       .then(data => {
         radarFrames = data.radar.past.concat(data.radar.nowcast);
-        currentIndex = data.radar.past.length - 1; // vždy reálny snímok
+        currentIndex = data.radar.past.length - 1; // aktuálny snímok
 
         radarFrames.forEach((frame, i) => {
           const layer = L.tileLayer(
@@ -162,7 +162,6 @@
       });
   }
 
-  // ✅ Načítanie pri spustení
   loadRadar();
 
   // ✅ Ovládanie
@@ -192,20 +191,20 @@
 
   document.getElementById("refresh").onclick = () => loadRadar();
 
-  // ✅ Blesky (voliteľná vrstva)
+  // ✅ Blesky (prepínač)
   let lightningLayer = null;
   let lightningVisible = false;
 
   document.getElementById("lightning").onclick = () => {
-    if (lightningVisible) {
-      map.removeLayer(lightningLayer);
-      lightningVisible = false;
-    } else {
+    if (!lightningVisible) {
       lightningLayer = L.tileLayer(
-        "https://tiles.lightningmaps.org/blitzortung/geo/{z}/{x}/{y}.png",
-        {opacity: 0.8}
+        "https://tiles.lightningmaps.org/blitzortung/lightning/{z}/{x}/{y}.png",
+        {opacity: 0.9, tileSize: 256}
       ).addTo(map);
       lightningVisible = true;
+    } else {
+      map.removeLayer(lightningLayer);
+      lightningVisible = false;
     }
   };
 </script>
