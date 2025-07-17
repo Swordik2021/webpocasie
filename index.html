@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Základná mapa – Slovensko</title>
+  <title>Radar – Slovensko</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -24,8 +24,8 @@
 <script>
   const map = L.map('map', {zoomControl: false, attributionControl: false});
 
-  // ✅ Sivší podklad (tmavší než základný)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  // ✅ Sivší podklad (tmavší než light, nie čierny)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     subdomains: 'abcd',
     maxZoom: 14
   }).addTo(map);
@@ -38,6 +38,17 @@
         style: {color: "#00bfff", weight: 1.5, fillOpacity: 0}
       }).addTo(map);
       map.fitBounds(geo.getBounds().pad(0.25));
+    });
+
+  // ✅ RainViewer – posledný radarový snímok
+  fetch("https://api.rainviewer.com/public/weather-maps.json")
+    .then(r => r.json())
+    .then(data => {
+      const lastRadar = data.radar.past.pop();
+      L.tileLayer(
+        `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/2/1_1.png`,
+        {opacity: 0.8}
+      ).addTo(map);
     });
 </script>
 </body>
