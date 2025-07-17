@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar zrazok</title>
+  <title>Radar – past + nowcast</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -32,7 +32,6 @@
     #controls button {
       background: #0D3F73;
       border: none;
-      color: white;
       width: 45px;
       height: 45px;
       border-radius: 50%;
@@ -45,10 +44,10 @@
     #controls button:hover {
       background: #155A9C;
     }
-    #controls svg {
+    #controls img {
       width: 22px;
       height: 22px;
-      fill: white;
+      filter: invert(1);
     }
     #timeBox {
       position: fixed;
@@ -90,18 +89,10 @@
 <div id="map"></div>
 
 <div id="controls">
-  <button id="back">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6L11 18zm1-12v12l8.5-6L12 6z"/></svg>
-  </button>
-  <button id="play">
-    <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-  </button>
-  <button id="next">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 6v12l8.5-6L5 6zm9 0v12l8.5-6L14 6z"/></svg>
-  </button>
-  <button id="refresh">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-  </button>
+  <button id="back"><img src="https://img.icons8.com/ios-filled/50/rewind.png"></button>
+  <button id="play"><img id="playIcon" src="https://img.icons8.com/ios-filled/50/play.png"></button>
+  <button id="next"><img src="https://img.icons8.com/ios-filled/50/fast-forward.png"></button>
+  <button id="refresh"><img src="https://img.icons8.com/ios-filled/50/synchronize.png"></button>
 </div>
 <div id="timeBox">Načítavam čas...</div>
 
@@ -154,7 +145,8 @@
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(r => r.json())
       .then(data => {
-        radarFrames = data.radar.past;
+        // ✅ Všetky snímky: minulost + predpoveď
+        radarFrames = data.radar.past.concat(data.radar.nowcast);
         currentIndex = radarFrames.length - 1;
 
         radarFrames.forEach((frame, i) => {
@@ -187,13 +179,13 @@
     if (playInterval) {
       clearInterval(playInterval);
       playInterval = null;
-      document.getElementById("playIcon").setAttribute("d","M8 5v14l11-7z"); // ▶
+      document.getElementById("playIcon").src = "https://img.icons8.com/ios-filled/50/play.png";
     } else {
       playInterval = setInterval(() => {
         currentIndex = (currentIndex + 1) % radarFrames.length;
         fadeToFrame(currentIndex);
       }, 500);
-      document.getElementById("playIcon").setAttribute("d","M6 19h4V5H6v14zm8-14v14h4V5h-4z"); // ⏸
+      document.getElementById("playIcon").src = "https://img.icons8.com/ios-filled/50/pause.png";
     }
   };
 
