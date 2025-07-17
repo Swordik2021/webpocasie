@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – originálny radar RainViewer</title>
+  <title>Slovensko – vlastná profi paleta</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -46,18 +46,67 @@
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // ✅ Originálny radar RainViewer (žiadne úpravy)
+    // ✅ Moja vlastná paleta
+    const myColors = [
+      [0,   0,  50, 200],     // veľmi slabé – tmavomodrá
+      [0,   0, 150, 220],     // slabé – modrá
+      [0, 180, 200, 220],     // mierne – tyrkysová
+      [0, 200,  50, 230],     // stredné – zelená
+      [255, 255,  0, 230],    // silné – žltá
+      [255, 150,  0, 240],    // veľmi silné – oranžová
+      [255,  0,   0, 250],    // extrém – červená
+      [150,  0,  50, 255]     // supercell – bordová
+    ];
+
+    function getMyColor(index) {
+      return myColors[Math.min(index, myColors.length - 1)];
+    }
+
+    // ✅ Canvas Overlay s mojou paletou
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(response => response.json())
       .then(data => {
         let lastRadar = data.radar.past[data.radar.past.length - 1];
-        L.tileLayer(
-          `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/2/1_1.png`,
-          {
-            opacity: 0.8,
-            zIndex: 10
-          }
-        ).addTo(map);
+
+        var radarLayer = L.tileLayer('', {
+          opacity: 0.9
+        });
+
+        radarLayer.createTile = function(coords) {
+          var tile = document.createElement('canvas');
+          var size = this.getTileSize();
+          tile.width = size.x;
+          tile.height = size.y;
+          var ctx = tile.getContext('2d');
+
+          var img = new Image();
+          img.crossOrigin = "Anonymous";
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+            var imgData = ctx.getImageData(0, 0, size.x, size.y);
+
+            for (let i = 0; i < imgData.data.length; i += 4) {
+              let value = imgData.data[i]; 
+              let index = Math.floor(value / 32); // 0-7 úrovní
+
+              if (index === 0) {
+                imgData.data[i + 3] = 0;
+              } else {
+                let c = getMyColor(index);
+                imgData.data[i] = c[0];
+                imgData.data[i + 1] = c[1];
+                imgData.data[i + 2] = c[2];
+                imgData.data[i + 3] = c[3];
+              }
+            }
+            ctx.putImageData(imgData, 0, 0);
+          };
+
+          img.src = `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/${coords.z}/${coords.x}/${coords.y}/2/1_0.png`;
+          return tile;
+        };
+
+        radarLayer.addTo(map);
       });
   </script>
 </body>
