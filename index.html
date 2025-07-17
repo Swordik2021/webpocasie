@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – čisté zrážky (funkčný)</title>
+  <title>Radar – čisté farebné zrážky</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -70,6 +70,11 @@
       font-size: 14px;
       cursor: pointer;
     }
+
+    /* ✅ Odstránenie sivej vrstvy – znížime jas a necháme len farby */
+    .leaflet-tile {
+      filter: contrast(150%) saturate(180%) brightness(120%);
+    }
   </style>
 </head>
 <body>
@@ -116,20 +121,12 @@
       slider.value = radarFrames.length - 1;
 
       radarFrames.forEach((frame, i) => {
-        // ✅ Skúsime mód 0 (čisté zrážky), ak nebude fungovať, padneme na mód 2
-        const testLayer = L.tileLayer(
-          `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/0/1_1.png`,
+        const layer = L.tileLayer(
+          // ✅ Používame farebný radar (mód 2)
+          `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
           {opacity: 0}
-        );
-
-        testLayer.on("tileerror", () => {
-          testLayer.setUrl(
-            `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`
-          );
-        });
-
-        testLayer.addTo(map);
-        radarLayers[i] = testLayer;
+        ).addTo(map);
+        radarLayers[i] = layer;
       });
 
       showFrame(slider.value);
