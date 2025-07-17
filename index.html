@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – paleta 4 s časom dole</title>
+  <title>Radar – plynulý s časom dole</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -17,7 +17,7 @@
     }
     #controls {
       position: fixed;
-      bottom: 60px;
+      bottom: 100px; /* ✅ väčšia medzera */
       left: 50%;
       transform: translateX(-50%);
       background: #072C4E;
@@ -48,14 +48,14 @@
     }
     #timeBox {
       position: fixed;
-      bottom: 10px;
+      bottom: 30px; /* ✅ väčšia medzera medzi časom a okrajom */
       left: 50%;
       transform: translateX(-50%);
       background: #072C4E;
       color: white;
-      padding: 8px 16px;
+      padding: 8px 20px;
       border-radius: 15px;
-      font-size: 20px;
+      font-size: 22px; /* ✅ o trochu väčšie */
       font-weight: bold;
       z-index: 9999;
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
@@ -93,7 +93,7 @@
       map.fitBounds(geo.getBounds().pad(0.25));
     });
 
-  // ✅ RainViewer s paletou 4 + čas
+  // ✅ RainViewer s paletou 4 + plynulejšie prehrávanie
   let radarFrames = [];
   let radarLayers = [];
   let currentIndex = 0;
@@ -127,7 +127,7 @@
       radarFrames.forEach((frame, i) => {
         const layer = L.tileLayer(
           `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/4/1_1.png`,
-          {opacity: 0}
+          {opacity: 0, updateWhenIdle: false, updateWhenZooming: false}
         ).addTo(map);
         radarLayers[i] = layer;
       });
@@ -156,7 +156,7 @@
       playInterval = setInterval(() => {
         currentIndex = (currentIndex + 1) % radarFrames.length;
         showFrame(currentIndex);
-      }, 500);
+      }, 300); // ✅ rýchlejšie a plynulejšie
     }
   });
 
