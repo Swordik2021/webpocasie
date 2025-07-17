@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar + Satelitný podklad</title>
+  <title>Radar + Satelit</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -31,7 +31,7 @@
     maxZoom: 18
   }).addTo(map);
 
-  // ✅ Hranice Slovenska (jemné)
+  // ✅ Hranice Slovenska
   fetch("slovakia_Regions_level_1.geojson")
     .then(response => response.json())
     .then(data => {
@@ -45,16 +45,16 @@
       map.fitBounds(geoLayer.getBounds());
     });
 
-  // ✅ Farby radaru (jemný gradient)
+  // ✅ Moja paleta (jemný gradient)
   const gradientColors = [
-    [0,   0,   0,   0],      // transparent
-    [0, 100, 255, 180],      // slabý dážď (modrá)
-    [0, 200, 255, 200],      // mierny dážď (tyrkysová)
-    [0, 255,   0, 220],      // stredný dážď (zelená)
-    [255,255,   0, 230],     // silný dážď (žltá)
-    [255,165,   0, 240],     // veľmi silný (oranžová)
-    [255,  0,   0, 250],     // búrky (červená)
-    [180,  0, 104, 255]      // extrémne (fialovo-červená)
+    [0,   0,   0,   0],     // transparent
+    [0, 100, 255, 180],     // slabé
+    [0, 200, 255, 200],     // mierne
+    [0, 255,   0, 220],     // stredné
+    [255,255,   0, 230],    // silné
+    [255,165,   0, 240],    // veľmi silné
+    [255,  0,   0, 250],    // búrky
+    [150,  0,  50, 255]     // extrém
   ];
 
   function getGradientColor(value) {
@@ -65,10 +65,16 @@
   fetch("https://api.rainviewer.com/public/weather-maps.json")
     .then(response => response.json())
     .then(data => {
-      let lastRadar = data.radar.past[data.radar.past.length - 1];
-      let lastCloud = data.satellite.past[data.satellite.past.length - 1];
+      // Radar – vezmeme posledný dostupný záznam
+      let radarFrames = data.radar.past;
+      if (radarFrames.length === 0) return;
+      let lastRadar = radarFrames[radarFrames.length - 1];
 
-      // ✅ Radar – prefarbovanie
+      // Satelit – posledný dostupný snímok
+      let satelliteFrames = data.satellite.past;
+      let lastCloud = satelliteFrames.length > 0 ? satelliteFrames[satelliteFrames.length - 1] : null;
+
+      // ✅ Radar – prekreslený s vlastnými farbami
       var radarLayer = L.tileLayer('', {opacity: 0.9});
       radarLayer.createTile = function(coords) {
         var tile = document.createElement('canvas');
@@ -82,12 +88,14 @@
         img.onload = function() {
           ctx.drawImage(img, 0, 0);
           var imgData = ctx.getImageData(0, 0, size.x, size.y);
+
           for (let i = 0; i < imgData.data.length; i += 4) {
-            let intensity = Math.floor(imgData.data[i] / 32); // 0-7
-            if (intensity === 0) {
+            let value = imgData.data[i]; // 0-255
+            let index = Math.floor(value / 32); // 0-7
+            if (index === 0) {
               imgData.data[i + 3] = 0;
             } else {
-              let c = getGradientColor(intensity);
+              let c = getGradientColor(index);
               imgData.data[i] = c[0];
               imgData.data[i + 1] = c[1];
               imgData.data[i + 2] = c[2];
@@ -96,17 +104,20 @@
           }
           ctx.putImageData(imgData, 0, 0);
         };
+
         img.src = `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/${coords.z}/${coords.x}/${coords.y}/2/1_0.png`;
         return tile;
       };
 
       radarLayer.addTo(map);
 
-      // ✅ Oblačnosť (originál RainViewer, jemne priesvitná)
-      L.tileLayer(
-        `https://tilecache.rainviewer.com/v2/satellite/${lastCloud.path}/256/{z}/{x}/{y}/2/1_1.png`,
-        {opacity: 0.4, zIndex: 5}
-      ).addTo(map);
+      // ✅ Oblačnosť (ak je dostupná)
+      if (lastCloud) {
+        L.tileLayer(
+          `https://tilecache.rainviewer.com/v2/satellite/${lastCloud.path}/256/{z}/{x}/{y}/2/1_1.png`,
+          {opacity: 0.4, zIndex: 5}
+        ).addTo(map);
+      }
     });
 </script>
 </body>
