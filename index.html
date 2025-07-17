@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – radar s vlastnými farbami</title>
+  <title>Slovensko – profi radar (Canvas)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -15,12 +15,6 @@
     .leaflet-control-attribution {
       display: none;
     }
-
-    /* ✅ Vlastný filter na radar */
-    .custom-radar-tile {
-      filter: hue-rotate(320deg) saturate(3) brightness(1.3) contrast(1.4);
-      /* Experimentuj s týmito hodnotami, aby si dostal presne tvoje odtiene */
-    }
   </style>
 </head>
 <body>
@@ -32,13 +26,13 @@
       attributionControl: false
     });
 
-    // Tmavý podklad
+    // ✅ Tmavý podklad
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
-      maxZoom: 19
+      maxZoom: 12
     }).addTo(map);
 
-    // Hranice Slovenska
+    // ✅ Hranice Slovenska
     fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
@@ -53,26 +47,70 @@
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // ✅ Radar bez rozmazaných okrajov (1_0.png)
+    // ✅ Funkcia na vlastnú farebnú paletu podľa intenzity
+    function getColor(value) {
+      return value > 200 ? '#ff0000' :    // červená (silné zrážky)
+             value > 100 ? '#ff8000' :    // oranžová
+             value > 50  ? '#ffff00' :    // žltá
+             value > 20  ? '#00ff00' :    // zelená
+             value > 5   ? '#00bfff' :    // modrá
+                          'transparent';  // žiadna zrážka
+    }
+
+    // ✅ Načítanie radarových tiles a prekreslenie na Canvas
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(response => response.json())
       .then(data => {
         let lastRadar = data.radar.past[data.radar.past.length - 1];
-        let radarLayer = L.tileLayer(
-          `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/2/1_0.png`, 
-          {
-            opacity: 0.7,
-            zIndex: 10
-          }
-        );
-        radarLayer.addTo(map);
 
-        // ✅ Aplikovanie filtra na všetky tiles
-        radarLayer.on('tileload', function(e) {
-          e.tile.classList.add("custom-radar-tile");
-        });
-      })
-      .catch(err => console.error("Chyba pri načítaní RainViewer:", err));
+        // Nahráme originálne tiles (1_0 = bez rozmazania)
+        var radarLayer = L.tileLayer.canvas({ zIndex: 10 });
+
+        radarLayer.drawTile = function(canvas, tilePoint, zoom) {
+          var ctx = canvas.getContext('2d');
+          var img = new Image();
+          img.crossOrigin = "Anonymous";
+
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+
+            // Čítanie pixelov a prefarbovanie
+            var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (var i = 0; i < imgData.data.length; i += 4) {
+              var r = imgData.data[i];
+              var g = imgData.data[i + 1];
+              var b = imgData.data[i + 2];
+              var intensity = Math.max(r, g, b); // odhad intenzity z pôvodného PNG
+
+              var newColor = getColor(intensity);
+              if (newColor !== 'transparent') {
+                let rgb = hexToRgb(newColor);
+                imgData.data[i] = rgb.r;
+                imgData.data[i + 1] = rgb.g;
+                imgData.data[i + 2] = rgb.b;
+                imgData.data[i + 3] = 200; // priehľadnosť
+              } else {
+                imgData.data[i + 3] = 0; // úplná priehľadnosť
+              }
+            }
+            ctx.putImageData(imgData, 0, 0);
+          };
+
+          img.src = `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/${zoom}/${tilePoint.x}/${tilePoint.y}/2/1_0.png`;
+        };
+
+        radarLayer.addTo(map);
+      });
+
+    // Pomocná funkcia na konverziu HEX na RGB
+    function hexToRgb(hex) {
+      var bigint = parseInt(hex.slice(1), 16);
+      return {
+        r: (bigint >> 16) & 255,
+        g: (bigint >> 8) & 255,
+        b: bigint & 255
+      };
+    }
   </script>
 </body>
 </html>
