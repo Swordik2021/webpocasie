@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – pevný slider a presné priblíženie</title>
+  <title>Radar – pevný slider</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -16,18 +16,19 @@
       display: none;
     }
     #controls {
-      position: absolute;
-      bottom: 15px;
+      position: fixed;           /* ✅ pevne vložené */
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.6);
-      padding: 8px 12px;
+      background: rgba(0,0,0,0.7);
+      padding: 10px 14px;
       border-radius: 8px;
       color: white;
       font-family: Arial, sans-serif;
       display: flex;
       align-items: center;
       gap: 10px;
+      z-index: 9999;             /* ✅ vždy navrchu */
     }
     input[type=range] {
       width: 350px;
@@ -45,6 +46,8 @@
 </head>
 <body>
 <div id="map"></div>
+
+<!-- ✅ pevný slider -->
 <div id="controls">
   <button id="play">▶</button>
   <input type="range" id="slider" min="0" max="0" value="0">
@@ -53,16 +56,14 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ✅ Presné priblíženie – podľa tvojej fotky
+  // ✅ Presné priblíženie
   const map = L.map('map', {zoomControl: false, attributionControl: false})
-               .setView([48.7, 19.7], 6.5); 
+               .setView([48.7, 19.7], 6.5);
 
-  // ✅ Tmavý podklad
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     subdomains: 'abcd', maxZoom: 12
   }).addTo(map);
 
-  // ✅ Modré hranice Slovenska
   fetch("slovakia_Regions_level_1.geojson")
     .then(r => r.json())
     .then(data => {
@@ -71,7 +72,6 @@
       }).addTo(map);
     });
 
-  // ✅ Radar s animáciou
   let radarFrames = [];
   let layers = [];
   let playInterval = null;
