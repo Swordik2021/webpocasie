@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – Okresy z GeoJSON</title>
+  <title>Slovensko – Regióny z GeoJSON</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #map { height: 100vh; width: 100%; }
@@ -20,19 +20,27 @@
       maxZoom: 19
     }).addTo(map);
 
-    fetch("slovakia_Districts_level_2.geojson")
+    fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
-        L.geoJSON(data, {
-          style: {
-            color: "lime",        // hranica okresov
-            weight: 1,            // hrúbka hraníc
-            fillColor: "blue",    // výplň okresov
-            fillOpacity: 0.2
-          }
-        }).addTo(map);
-      })
-      .catch(err => console.error("Chyba pri načítaní GeoJSON:", err));
-  </script>
-</body>
-</html>
+        function style(feature) {
+          return {
+            color: "red",          // hranica
+            weight: 3,             // hrúbka hranice
+            fillColor: "white",    // výplň
+            fillOpacity: 0.3
+          };
+        }
+
+        function highlightFeature(e) {
+          var layer = e.target;
+          layer.setStyle({
+            weight: 4,
+            color: "yellow",      // hranica pri prechode myšou
+            fillColor: "orange",  // výplň pri prechode myšou
+            fillOpacity: 0.5
+          });
+        }
+
+        function resetHighlight(e) {
+          geojson.reset
