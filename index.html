@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – stabilný a bez preblikávania</title>
+  <title>Radar – plynulé snímky</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -82,12 +82,14 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+  // ✅ Presné priblíženie Slovenska (bližšie)
   const map = L.map('map', {zoomControl: false, attributionControl: false})
-               .setView([48.7, 19.7], 6.5); 
+               .setView([48.7, 19.7], 7.2);
 
   // ✅ Tmavý podklad
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 12
+    subdomains: 'abcd',
+    maxZoom: 14 // 🔥 radar nebude miznúť pri väčšom priblížení
   }).addTo(map);
 
   // ✅ Modré hranice Slovenska
@@ -142,13 +144,26 @@
 
         const nextLayer = L.tileLayer(
           `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
-          {opacity: 0} // najprv neviditeľné
+          {opacity: 0}
         ).addTo(map);
 
         nextLayer.on("load", () => {
-          if (currentLayer) map.removeLayer(currentLayer);
+          // ✅ plynulý fade (miznutie starej a zobrazenie novej)
+          if (currentLayer) {
+            let oldLayer = currentLayer;
+            let opacity = 0.7;
+            const fadeOut = setInterval(() => {
+              opacity -= 0.1;
+              if (opacity <= 0) {
+                clearInterval(fadeOut);
+                map.removeLayer(oldLayer);
+              } else {
+                oldLayer.setOpacity(opacity);
+              }
+            }, 50);
+          }
           currentLayer = nextLayer;
-          currentLayer.setOpacity(sliderMode ? 1 : 0.7); // zobraziť až po načítaní
+          currentLayer.setOpacity(sliderMode ? 1 : 0.7);
         });
 
         const t = new Date(frame.time * 1000);
