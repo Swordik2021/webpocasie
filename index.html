@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – pevný slider</title>
+  <title>Radar – ostré zrážky a moderný slider</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -16,23 +16,52 @@
       display: none;
     }
     #controls {
-      position: fixed;           /* ✅ pevne vložené */
+      position: fixed;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
-      padding: 10px 14px;
+      background: rgba(0,0,0,0.6);
+      padding: 10px 15px;
       border-radius: 8px;
       color: white;
       font-family: Arial, sans-serif;
       display: flex;
       align-items: center;
-      gap: 10px;
-      z-index: 9999;             /* ✅ vždy navrchu */
+      gap: 12px;
+      z-index: 9999;
     }
+    /* ✅ moderný slider */
     input[type=range] {
+      -webkit-appearance: none;
       width: 350px;
+      height: 6px;
+      background: #1E90FF;
+      border-radius: 3px;
+      outline: none;
       cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border: 2px solid #1E90FF;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: white;
+      border: 2px solid #1E90FF;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    #time {
+      font-weight: bold;
+      font-size: 15px;
+      min-width: 90px;
+      text-align: right;
     }
     button {
       background: white;
@@ -46,8 +75,6 @@
 </head>
 <body>
 <div id="map"></div>
-
-<!-- ✅ pevný slider -->
 <div id="controls">
   <button id="play">▶</button>
   <input type="range" id="slider" min="0" max="0" value="0">
@@ -56,9 +83,8 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ✅ Presné priblíženie
   const map = L.map('map', {zoomControl: false, attributionControl: false})
-               .setView([48.7, 19.7], 6.5);
+               .setView([48.7, 19.7], 6.5); 
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     subdomains: 'abcd', maxZoom: 12
@@ -73,7 +99,7 @@
     });
 
   let radarFrames = [];
-  let layers = [];
+  let currentLayer = null;
   let playInterval = null;
   const slider = document.getElementById("slider");
   const timeLabel = document.getElementById("time");
@@ -87,7 +113,12 @@
       slider.value = radarFrames.length - 1;
       showFrame(slider.value);
 
-      slider.addEventListener("input", () => showFrame(slider.value));
+      slider.addEventListener("input", () => {
+        clearInterval(playInterval);
+        playInterval = null;
+        playBtn.innerText = "▶";
+        showFrame(slider.value, true); // ✅ v režime slidera 1 vrstva = ostré
+      });
 
       playBtn.addEventListener("click", () => {
         if (playInterval) {
@@ -98,21 +129,21 @@
           playBtn.innerText = "⏸";
           playInterval = setInterval(() => {
             slider.value = (parseInt(slider.value) + 1) % radarFrames.length;
-            showFrame(slider.value);
+            showFrame(slider.value, false);
           }, 1000);
         }
       });
 
-      function showFrame(index) {
+      function showFrame(index, sliderMode = false) {
         const frame = radarFrames[index];
         if (!frame) return;
 
-        if (layers.length > 3) map.removeLayer(layers.shift());
-        const layer = L.tileLayer(
+        if (currentLayer) map.removeLayer(currentLayer);
+
+        currentLayer = L.tileLayer(
           `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
-          {opacity: 0.7}
+          {opacity: sliderMode ? 1 : 0.7} // ✅ ostré keď posúvame ručne
         ).addTo(map);
-        layers.push(layer);
 
         const t = new Date(frame.time * 1000);
         timeLabel.innerText =
