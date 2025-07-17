@@ -12,7 +12,7 @@
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    var map = L.map('map').setView([48.7, 19.7], 7);
+    var map = L.map('map');
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OSM contributors &copy; CARTO',
@@ -23,13 +23,16 @@
     fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
-        L.geoJSON(data, {
+        let geoLayer = L.geoJSON(data, {
           style: {
-            color: "#66b3ff",   // ✅ bledomodrá
+            color: "#66b3ff",   // bledomodrá
             weight: 1.5,        // tenšie čiary
             fillOpacity: 0      // žiadna výplň
           }
         }).addTo(map);
+
+        // ✅ Automatické zameranie na Slovensko podľa hraníc
+        map.fitBounds(geoLayer.getBounds());
       })
       .catch(err => console.error("Chyba pri načítaní GeoJSON:", err));
   </script>
