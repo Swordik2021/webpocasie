@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – mapa so zrážkami</title>
+  <title>Slovensko – radarové zrážky</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -26,13 +26,13 @@
       attributionControl: false
     });
 
-    // ✅ Tmavý podklad
+    // Tmavý podklad
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 19
     }).addTo(map);
 
-    // ✅ Načítanie hraníc Slovenska
+    // Načítanie hraníc Slovenska
     fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
@@ -47,25 +47,21 @@
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // ✅ RainViewer vrstva zrážok
-    var rainviewer = L.tileLayer(
-      "https://tilecache.rainviewer.com/v2/radar/nowcast/{time}/256/{z}/{x}/{y}/2/1_1.png", 
-      {
-        opacity: 0.6,  // priehľadnosť zrážok
-        tileSize: 256,
-        zIndex: 10
-      }
-    );
-
-    // ✅ Nastavenie aktuálneho času (RainViewer poskytuje najnovšie dáta v posledných 10-15 min)
+    // ✅ RainViewer - načítanie posledného dostupného radaru
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(response => response.json())
       .then(data => {
-        let latestTime = data.radar.past[data.radar.past.length - 1].time;
-        rainviewer.setUrl(`https://tilecache.rainviewer.com/v2/radar/nowcast/${latestTime}/256/{z}/{x}/{y}/2/1_1.png`);
-        rainviewer.addTo(map);
+        let lastRadar = data.radar.past[data.radar.past.length - 1]; // posledný dostupný snímok
+        let radarLayer = L.tileLayer(
+          `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/2/1_1.png`,
+          {
+            opacity: 0.6,
+            zIndex: 10
+          }
+        );
+        radarLayer.addTo(map);
       })
-      .catch(err => console.error("Chyba pri načítaní RainViewer API:", err));
+      .catch(err => console.error("Chyba pri načítaní RainViewer:", err));
   </script>
 </body>
 </html>
