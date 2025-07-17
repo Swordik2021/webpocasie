@@ -12,25 +12,22 @@
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // Inicializácia mapy
     var map = L.map('map').setView([48.7, 19.7], 7);
 
-    // Tmavý podklad
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OSM contributors &copy; CARTO',
       subdomains: 'abcd',
       maxZoom: 19
     }).addTo(map);
 
-    // Načítanie GeoJSON – bez popupov
     fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
         L.geoJSON(data, {
           style: {
-            color: "yellow",
-            weight: 2,
-            fillColor: "orange",
+            color: "red",        // hranica
+            weight: 3,           // hrúbka hranice
+            fillColor: "white",  // výplň
             fillOpacity: 0.3
           }
         }).addTo(map);
