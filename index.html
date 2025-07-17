@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar + Blesky</title>
+  <title>Radar + Blesky (Blitzortung)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -101,7 +101,8 @@
 
 <div id="attribution">
   Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &amp;
-  <a href="https://www.rainviewer.com" target="_blank">RainViewer</a>
+  <a href="https://www.rainviewer.com" target="_blank">RainViewer</a> &amp;
+  <a href="https://www.lightningmaps.org" target="_blank">LightningMaps.org</a>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -192,15 +193,15 @@
 
   document.getElementById("refresh").onclick = () => loadRadar();
 
-  // ✅ Blesky (prepínač – RainViewer tileserver)
+  // ✅ Blesky (prepínač – Blitzortung)
   let lightningLayer = null;
   let lightningVisible = false;
 
   document.getElementById("lightning").onclick = () => {
     if (!lightningVisible) {
       lightningLayer = L.tileLayer(
-        "https://tilecache.rainviewer.com/v2/lightning/last/256/{z}/{x}/{y}/2/1_1.png",
-        {opacity: 1}
+        "https://tiles.lightningmaps.org/blitzortung/geo/{z}/{x}/{y}.png",
+        {opacity: 1, tileSize: 256}
       ).addTo(map);
       lightningVisible = true;
     } else {
