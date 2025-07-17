@@ -38,9 +38,6 @@
       border-radius: 50%;
       font-size: 20px;
       cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       transition: background 0.2s;
     }
     #controls button:hover {
@@ -83,7 +80,7 @@
     maxZoom: 14
   }).addTo(map);
 
-  // ✅ Modré hranice Slovenska
+  // ✅ Hranice Slovenska
   fetch("slovakia_Regions_level_1.geojson")
     .then(r => r.json())
     .then(data => {
@@ -93,28 +90,24 @@
       map.fitBounds(geo.getBounds().pad(0.25));
     });
 
-  // ✅ RainViewer s plynulým fade-in
   let radarFrames = [];
   let radarLayers = [];
   let currentIndex = 0;
   let playInterval = null;
 
+  const timeBox = document.getElementById("timeBox");
+
   function formatDate(timestamp) {
     const date = new Date(timestamp * 1000);
     const days = ["NE", "PO", "UT", "ST", "ŠT", "PI", "SO"];
-    const day = days[date.getDay()];
-    const d = String(date.getDate()).padStart(2, '0');
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const y = date.getFullYear();
-    const h = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-    return `${day} ${d}.${m}.${y} o ${h}:${min}`;
+    return `${days[date.getDay()]} ${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()} o ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   }
 
-  function fadeToFrame(newIndex) {
+  function fadeToFrame(index) {
     radarLayers.forEach((layer, i) => {
-      if (i === newIndex) {
-        let opacity = layer.options.opacity;
+      if (i === index) {
+        let opacity = 0;
+        layer.setOpacity(0);
         const fade = setInterval(() => {
           opacity += 0.1;
           layer.setOpacity(opacity);
@@ -124,7 +117,7 @@
         layer.setOpacity(0);
       }
     });
-    document.getElementById("timeBox").textContent = formatDate(radarFrames[newIndex].time);
+    timeBox.textContent = formatDate(radarFrames[index].time);
   }
 
   fetch("https://api.rainviewer.com/public/weather-maps.json")
@@ -145,17 +138,17 @@
     });
 
   // ✅ Ovládanie
-  document.getElementById("back").addEventListener("click", () => {
+  document.getElementById("back").onclick = () => {
     currentIndex = (currentIndex - 1 + radarFrames.length) % radarFrames.length;
     fadeToFrame(currentIndex);
-  });
+  };
 
-  document.getElementById("next").addEventListener("click", () => {
+  document.getElementById("next").onclick = () => {
     currentIndex = (currentIndex + 1) % radarFrames.length;
     fadeToFrame(currentIndex);
-  });
+  };
 
-  document.getElementById("play").addEventListener("click", () => {
+  document.getElementById("play").onclick = () => {
     if (playInterval) {
       clearInterval(playInterval);
       playInterval = null;
@@ -165,16 +158,16 @@
       playInterval = setInterval(() => {
         currentIndex = (currentIndex + 1) % radarFrames.length;
         fadeToFrame(currentIndex);
-      }, 350); // ✅ rýchle, ale plynulé
+      }, 500); // ✅ spomalené a plynulé
     }
-  });
+  };
 
-  document.getElementById("refresh").addEventListener("click", () => location.reload());
-  document.getElementById("close").addEventListener("click", () => {
+  document.getElementById("refresh").onclick = () => location.reload();
+  document.getElementById("close").onclick = () => {
     radarLayers.forEach(layer => map.removeLayer(layer));
     document.getElementById("controls").style.display = "none";
-    document.getElementById("timeBox").style.display = "none";
-  });
+    timeBox.style.display = "none";
+  };
 </script>
 </body>
 </html>
