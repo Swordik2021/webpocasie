@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – originálne farby RainViewer</title>
+  <title>Slovensko – radar s farbami podľa legendy</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -46,22 +46,25 @@
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // ✅ Presná paleta RainViewer (zo zdrojového kódu RainViewer)
-    const rainColors = [
-      [0,   0,   0,   0],      // transparent
-      [163, 246,   0, 200],    // svetlozelená
-      [40,  167,  69, 200],    // zelená
-      [255, 216,   0, 200],    // žltá
-      [255, 144,   0, 220],    // oranžová
-      [255,   0,   0, 230],    // červená
-      [200,   0, 255, 230]     // fialová (najsilnejšie)
+    // ✅ Paleta podľa tvojej legendy
+    const customColors = [
+      [0,   0,   0,   0],        // transparent
+      [0, 176,  80, 200],        // Overcast - zelená
+      [0, 255,   0, 200],        // Drizzle - svetlá zelená
+      [255, 255,  0, 210],       // Light rain - žltá
+      [255, 192,  0, 220],       // Moderate rain - oranžová
+      [255,   0,  0, 230],       // Shower - červená
+      [112,  48,160, 230],       // Hail - fialová
+      [204, 242,255, 200],       // Light snow - svetlomodrá
+      [51,  153,255, 220],       // Moderate snow - modrá
+      [0,   51, 204, 230]        // Heavy snow - tmavomodrá
     ];
 
     function getColorByIndex(index) {
-      return rainColors[Math.min(index, rainColors.length - 1)];
+      return customColors[Math.min(index, customColors.length - 1)];
     }
 
-    // ✅ Canvas Overlay – správne dekódovanie indexu
+    // ✅ Canvas Overlay s touto paletou
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(response => response.json())
       .then(data => {
@@ -85,8 +88,8 @@
             var imgData = ctx.getImageData(0, 0, size.x, size.y);
 
             for (let i = 0; i < imgData.data.length; i += 4) {
-              // ✅ RainViewer kóduje intenzitu do RED kanála (0–255)
-              let index = Math.floor(imgData.data[i] / 42); 
+              // ✅ Index z intensity (RainViewer ~0–255 rozdelené do 10 úrovní)
+              let index = Math.floor(imgData.data[i] / 28);
               let color = getColorByIndex(index);
 
               if (color[3] === 0) {
