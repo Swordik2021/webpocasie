@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – čisté zrážky</title>
+  <title>Radar – farebné zrážky bez oblačnosti</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -70,6 +70,11 @@
       font-size: 14px;
       cursor: pointer;
     }
+
+    /* ✅ Odstránenie šedej oblačnosti - potlačíme priehľadné odtiene */
+    .leaflet-tile {
+      filter: contrast(180%) saturate(200%) brightness(110%);
+    }
   </style>
 </head>
 <body>
@@ -97,7 +102,7 @@
       map.fitBounds(geo.getBounds().pad(0.25));
     });
 
-  // ✅ Radar – načítanie a filtrovanie cez Canvas
+  // ✅ Radar – prednačítanie snímok
   let radarFrames = [];
   let radarLayers = [];
   let playInterval = null;
@@ -114,46 +119,11 @@
       slider.value = radarFrames.length - 1;
 
       radarFrames.forEach((frame, i) => {
-        const url = `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
-
-        const canvasLayer = L.tileLayer.canvas();
-        canvasLayer.drawTile = function(canvas, tilePoint, zoom) {
-          const ctx = canvas.getContext('2d');
-          const img = new Image();
-          img.crossOrigin = "Anonymous";
-          img.onload = function() {
-            ctx.drawImage(img, 0, 0);
-
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imgData.data;
-
-            for (let j = 0; j < data.length; j += 4) {
-              const r = data[j];
-              const g = data[j + 1];
-              const b = data[j + 2];
-
-              // ✅ Odstránime sivé oblačné pixely
-              if (r === g && g === b) {
-                data[j + 3] = 0; // priehľadné
-              }
-
-              // ✅ Zvýrazníme prechody zrážok
-              if (g > r && g > b) {        // zelená
-                data[j] = 0; data[j+1] = 180; data[j+2] = 0;
-              } else if (r > g && r < 200) { // žltá
-                data[j] = 255; data[j+1] = 220; data[j+2] = 0;
-              } else if (r > 200) {         // červená
-                data[j] = 220; data[j+1] = 0; data[j+2] = 0;
-              }
-            }
-
-            ctx.putImageData(imgData, 0, 0);
-          };
-          img.src = url.replace("{z}", zoom).replace("{x}", tilePoint.x).replace("{y}", tilePoint.y);
-        };
-
-        canvasLayer.setOpacity(0).addTo(map);
-        radarLayers[i] = canvasLayer;
+        const layer = L.tileLayer(
+          `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+          {opacity: 0}
+        ).addTo(map);
+        radarLayers[i] = layer;
       });
 
       showFrame(slider.value);
@@ -181,7 +151,7 @@
 
       function showFrame(index) {
         radarLayers.forEach((layer, i) => {
-          layer.setOpacity(i === parseInt(index) ? 0.9 : 0);
+          layer.setOpacity(i === parseInt(index) ? 0.8 : 0);
         });
 
         const t = new Date(radarFrames[index].time * 1000);
