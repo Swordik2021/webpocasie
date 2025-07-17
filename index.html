@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – bez preblikávania</title>
+  <title>Radar – stabilný a bez preblikávania</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -83,13 +83,14 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   const map = L.map('map', {zoomControl: false, attributionControl: false})
-               .setView([48.7, 19.7], 6.5); // presné priblíženie
+               .setView([48.7, 19.7], 6.5); 
 
+  // ✅ Tmavý podklad
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     subdomains: 'abcd', maxZoom: 12
   }).addTo(map);
 
-  // Hranice Slovenska
+  // ✅ Modré hranice Slovenska
   fetch("slovakia_Regions_level_1.geojson")
     .then(r => r.json())
     .then(data => {
@@ -98,7 +99,7 @@
       }).addTo(map);
     });
 
-  // Radarové snímky
+  // ✅ Radar s animáciou
   let radarFrames = [];
   let currentLayer = null;
   let playInterval = null;
@@ -141,14 +142,13 @@
 
         const nextLayer = L.tileLayer(
           `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
-          {opacity: sliderMode ? 1 : 0.7}
-        );
+          {opacity: 0} // najprv neviditeľné
+        ).addTo(map);
 
-        // ✅ počkáme, kým sa nová vrstva načíta → žiadne prebliknutie
         nextLayer.on("load", () => {
           if (currentLayer) map.removeLayer(currentLayer);
           currentLayer = nextLayer;
-          currentLayer.addTo(map);
+          currentLayer.setOpacity(sliderMode ? 1 : 0.7); // zobraziť až po načítaní
         });
 
         const t = new Date(frame.time * 1000);
