@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – paleta 4 s ovládaním času</title>
+  <title>Radar – paleta 4 s časom</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -17,7 +17,7 @@
     }
     #controls {
       position: fixed;
-      bottom: 20px;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
       background: #072C4E;
@@ -46,11 +46,25 @@
     #controls button:hover {
       background: #155A9C;
     }
+    #timeBox {
+      position: fixed;
+      top: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #072C4E;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      z-index: 9999;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      font-family: Arial, sans-serif;
+    }
   </style>
 </head>
 <body>
 <div id="map"></div>
-
 <div id="controls">
   <button id="back">⏮</button>
   <button id="play">▶</button>
@@ -58,6 +72,7 @@
   <button id="refresh">🔄</button>
   <button id="close">✖</button>
 </div>
+<div id="timeBox">Načítavam čas...</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -77,16 +92,29 @@
       map.fitBounds(geo.getBounds().pad(0.25));
     });
 
-  // ✅ RainViewer s paletou 4 + časový playback
+  // ✅ RainViewer s paletou 4 + čas
   let radarFrames = [];
   let radarLayers = [];
   let currentIndex = 0;
   let playInterval = null;
 
+  function formatDate(timestamp) {
+    const date = new Date(timestamp * 1000);
+    const days = ["NE", "PO", "UT", "ST", "ŠT", "PI", "SO"];
+    const day = days[date.getDay()];
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const y = date.getFullYear();
+    const h = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    return `${day} ${d}.${m}.${y} o ${h}:${min}`;
+  }
+
   function showFrame(index) {
     radarLayers.forEach((layer, i) => {
       layer.setOpacity(i === index ? 0.8 : 0);
     });
+    document.getElementById("timeBox").textContent = formatDate(radarFrames[index].time);
   }
 
   fetch("https://api.rainviewer.com/public/weather-maps.json")
@@ -135,6 +163,7 @@
   document.getElementById("close").addEventListener("click", () => {
     radarLayers.forEach(layer => map.removeLayer(layer));
     document.getElementById("controls").style.display = "none";
+    document.getElementById("timeBox").style.display = "none";
   });
 </script>
 </body>
