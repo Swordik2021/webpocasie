@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – vlastné farby</title>
+  <title>Radar – zelená/žltá/červená paleta</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -15,47 +15,10 @@
     .leaflet-control-attribution {
       display: none;
     }
-    #controls {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #072C4E;
-      padding: 8px 12px;
-      border-radius: 25px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      z-index: 9999;
-    }
-    #controls button {
-      background: #0D3F73;
-      border: none;
-      color: white;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    #controls button:hover {
-      background: #155A9C;
-    }
   </style>
 </head>
 <body>
 <div id="map"></div>
-
-<div id="controls">
-  <button id="back">⏮</button>
-  <button id="play">▶</button>
-  <button id="next">⏭</button>
-  <button id="refresh">🔄</button>
-  <button id="close">✖</button>
-</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -75,102 +38,16 @@
       map.fitBounds(geo.getBounds().pad(0.25));
     });
 
-  // ✅ RainViewer s vlastnými farbami (Canvas)
-  let radarFrames = [];
-  let radarLayers = [];
-  let currentIndex = 0;
-  let playInterval = null;
-
-  function recolorCanvas(ctx, imgData) {
-    const data = imgData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i], g = data[i + 1], b = data[i + 2];
-
-      // ✅ Odstrániť sivú oblačnosť (rovnaké RGB hodnoty)
-      if (Math.abs(r - g) < 10 && Math.abs(g - b) < 10) {
-        data[i + 3] = 0;
-        continue;
-      }
-
-      // ✅ Mapovanie farieb na klasický radarový štýl
-      const intensity = (r + g + b) / 3;
-      if (intensity < 50) {
-        data[i] = 0; data[i+1] = 80; data[i+2] = 0; // tmavozelená
-      } else if (intensity < 120) {
-        data[i] = 0; data[i+1] = 180; data[i+2] = 0; // zelená
-      } else if (intensity < 180) {
-        data[i] = 255; data[i+1] = 220; data[i+2] = 0; // žltá
-      } else if (intensity < 230) {
-        data[i] = 255; data[i+1] = 120; data[i+2] = 0; // oranžová
-      } else {
-        data[i] = 200; data[i+1] = 0; data[i+2] = 0; // červená
-      }
-    }
-    ctx.putImageData(imgData, 0, 0);
-  }
-
-  function showFrame(index) {
-    radarLayers.forEach((layer, i) => {
-      layer.setOpacity(i === index ? 0.9 : 0);
-    });
-  }
-
+  // ✅ RainViewer – paleta 3 (zelená, žltá, červená)
   fetch("https://api.rainviewer.com/public/weather-maps.json")
     .then(r => r.json())
     .then(data => {
-      radarFrames = [...data.radar.past, ...data.radar.nowcast];
-      currentIndex = radarFrames.length - 1;
-
-      radarFrames.forEach((frame, i) => {
-        const canvasLayer = L.tileLayer.canvas();
-        canvasLayer.drawTile = function(canvas, tilePoint, zoom) {
-          const ctx = canvas.getContext('2d');
-          const img = new Image();
-          img.crossOrigin = "Anonymous";
-          img.onload = function() {
-            ctx.drawImage(img, 0, 0);
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            recolorCanvas(ctx, imgData);
-          };
-          img.src = `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/${zoom}/${tilePoint.x}/${tilePoint.y}/2/1_1.png`;
-        };
-        canvasLayer.setOpacity(0).addTo(map);
-        radarLayers[i] = canvasLayer;
-      });
-
-      showFrame(currentIndex);
+      const lastRadar = data.radar.past.pop();
+      L.tileLayer(
+        `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/3/1_1.png`,
+        {opacity: 0.8}
+      ).addTo(map);
     });
-
-  // ✅ Ovládanie
-  document.getElementById("back").addEventListener("click", () => {
-    currentIndex = (currentIndex - 1 + radarFrames.length) % radarFrames.length;
-    showFrame(currentIndex);
-  });
-
-  document.getElementById("next").addEventListener("click", () => {
-    currentIndex = (currentIndex + 1) % radarFrames.length;
-    showFrame(currentIndex);
-  });
-
-  document.getElementById("play").addEventListener("click", () => {
-    if (playInterval) {
-      clearInterval(playInterval);
-      playInterval = null;
-      document.getElementById("play").textContent = "▶";
-    } else {
-      document.getElementById("play").textContent = "⏸";
-      playInterval = setInterval(() => {
-        currentIndex = (currentIndex + 1) % radarFrames.length;
-        showFrame(currentIndex);
-      }, 500);
-    }
-  });
-
-  document.getElementById("refresh").addEventListener("click", () => location.reload());
-  document.getElementById("close").addEventListener("click", () => {
-    radarLayers.forEach(layer => map.removeLayer(layer));
-    document.getElementById("controls").style.display = "none";
-  });
 </script>
 </body>
 </html>
