@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – paleta 4 s časom</title>
+  <title>Radar – paleta 4 s časom dole</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -17,7 +17,7 @@
     }
     #controls {
       position: fixed;
-      top: 20px;
+      bottom: 60px;
       left: 50%;
       transform: translateX(-50%);
       background: #072C4E;
@@ -48,7 +48,7 @@
     }
     #timeBox {
       position: fixed;
-      top: 90px;
+      bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
       background: #072C4E;
@@ -65,6 +65,7 @@
 </head>
 <body>
 <div id="map"></div>
+
 <div id="controls">
   <button id="back">⏮</button>
   <button id="play">▶</button>
