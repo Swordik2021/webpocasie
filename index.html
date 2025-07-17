@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – pevný slider</title>
+  <title>Radar – pevný slider a presné priblíženie</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -18,7 +18,8 @@
     #controls {
       position: absolute;
       bottom: 15px;
-      right: 15px;
+      left: 50%;
+      transform: translateX(-50%);
       background: rgba(0,0,0,0.6);
       padding: 8px 12px;
       border-radius: 8px;
@@ -29,7 +30,7 @@
       gap: 10px;
     }
     input[type=range] {
-      width: 250px;
+      width: 350px;
       cursor: pointer;
     }
     button {
@@ -52,8 +53,9 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+  // ✅ Presné priblíženie – podľa tvojej fotky
   const map = L.map('map', {zoomControl: false, attributionControl: false})
-               .setView([48.7, 19.7], 7.3); // 🔥 o niečo bližšie priblíženie
+               .setView([48.7, 19.7], 6.5); 
 
   // ✅ Tmavý podklad
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -97,7 +99,7 @@
           playInterval = setInterval(() => {
             slider.value = (parseInt(slider.value) + 1) % radarFrames.length;
             showFrame(slider.value);
-          }, 1000); // 🔥 rýchlosť prehrávania
+          }, 1000);
         }
       });
 
