@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – radar s farbami podľa legendy</title>
+  <title>Slovensko – originálne farby radar</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -46,25 +46,26 @@
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // ✅ Paleta podľa tvojej legendy
-    const customColors = [
-      [0,   0,   0,   0],        // transparent
-      [0, 176,  80, 200],        // Overcast - zelená
-      [0, 255,   0, 200],        // Drizzle - svetlá zelená
-      [255, 255,  0, 210],       // Light rain - žltá
-      [255, 192,  0, 220],       // Moderate rain - oranžová
-      [255,   0,  0, 230],       // Shower - červená
-      [112,  48,160, 230],       // Hail - fialová
-      [204, 242,255, 200],       // Light snow - svetlomodrá
-      [51,  153,255, 220],       // Moderate snow - modrá
-      [0,   51, 204, 230]        // Heavy snow - tmavomodrá
+    // ✅ Presná originálna paleta RainViewer (bez úprav)
+    const rainviewerColors = [
+      [0, 0, 0, 0],          // transparent
+      [4, 233, 231, 255],    // light drizzle
+      [0, 180, 255, 255],    // drizzle
+      [0, 111, 255, 255],    // light rain
+      [0, 255, 0, 255],      // moderate rain
+      [0, 200, 0, 255],      // heavy rain
+      [255, 255, 0, 255],    // very heavy rain
+      [255, 160, 0, 255],    // shower
+      [255, 0, 0, 255],      // storm
+      [180, 0, 104, 255],    // hail
+      [255, 255, 255, 255]   // extreme hail
     ];
 
     function getColorByIndex(index) {
-      return customColors[Math.min(index, customColors.length - 1)];
+      return rainviewerColors[Math.min(index, rainviewerColors.length - 1)];
     }
 
-    // ✅ Canvas Overlay s touto paletou
+    // ✅ Canvas Overlay s ostrými hranami
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(response => response.json())
       .then(data => {
@@ -88,13 +89,14 @@
             var imgData = ctx.getImageData(0, 0, size.x, size.y);
 
             for (let i = 0; i < imgData.data.length; i += 4) {
-              // ✅ Index z intensity (RainViewer ~0–255 rozdelené do 10 úrovní)
-              let index = Math.floor(imgData.data[i] / 28);
-              let color = getColorByIndex(index);
+              let value = imgData.data[i]; 
+              // index 0-10, ostré orezanie
+              let index = Math.floor(value / 25.5); 
 
-              if (color[3] === 0) {
+              if (index === 0) {
                 imgData.data[i + 3] = 0;
               } else {
+                let color = getColorByIndex(index);
                 imgData.data[i] = color[0];
                 imgData.data[i + 1] = color[1];
                 imgData.data[i + 2] = color[2];
