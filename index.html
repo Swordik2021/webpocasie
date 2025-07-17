@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – past + nowcast</title>
+  <title>Radar – aktuálny snímok</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -145,8 +145,8 @@
     fetch("https://api.rainviewer.com/public/weather-maps.json")
       .then(r => r.json())
       .then(data => {
-        // ✅ Všetky snímky: minulost + predpoveď
         radarFrames = data.radar.past.concat(data.radar.nowcast);
+        // ✅ vždy aktuálny snímok (posledný)
         currentIndex = radarFrames.length - 1;
 
         radarFrames.forEach((frame, i) => {
