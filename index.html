@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – paleta 5</title>
+  <title>Radar – prepínač paliet</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -15,10 +15,24 @@
     .leaflet-control-attribution {
       display: none;
     }
+    #paletteControl {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #072C4E;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      z-index: 9999;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="paletteControl">🎨 Paleta: <span id="paletteNum">0</span></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -38,16 +52,34 @@
       map.fitBounds(geo.getBounds().pad(0.25));
     });
 
-  // ✅ RainViewer – paleta 5 (klasická radarová zelená/žltá/červená)
-  fetch("https://api.rainviewer.com/public/weather-maps.json")
-    .then(r => r.json())
-    .then(data => {
-      const lastRadar = data.radar.past.pop();
-      L.tileLayer(
-        `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/5/1_1.png`,
-        {opacity: 0.8}
-      ).addTo(map);
-    });
+  // ✅ Radar RainViewer s prepínateľnou paletou
+  let radarLayer;
+  let radarFrames;
+  let currentPalette = 0;
+
+  function loadRadar(palette) {
+    if (radarLayer) map.removeLayer(radarLayer);
+    fetch("https://api.rainviewer.com/public/weather-maps.json")
+      .then(r => r.json())
+      .then(data => {
+        radarFrames = [...data.radar.past, ...data.radar.nowcast];
+        const lastRadar = radarFrames[radarFrames.length - 1];
+        radarLayer = L.tileLayer(
+          `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/${palette}/1_1.png`,
+          {opacity: 0.8}
+        ).addTo(map);
+      });
+  }
+
+  // ✅ Ovládanie palety
+  document.getElementById("paletteControl").addEventListener("click", () => {
+    currentPalette = (currentPalette + 1) % 7; // palety 0–6
+    document.getElementById("paletteNum").textContent = currentPalette;
+    loadRadar(currentPalette);
+  });
+
+  // Načítaj hneď prvú
+  loadRadar(currentPalette);
 </script>
 </body>
 </html>
