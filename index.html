@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – Regióny z GeoJSON</title>
+  <title>Slovensko – Kraje z GeoJSON</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #map { height: 100vh; width: 100%; }
@@ -23,24 +23,15 @@
     fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
-        function style(feature) {
-          return {
-            color: "red",          // hranica
-            weight: 3,             // hrúbka hranice
-            fillColor: "white",    // výplň
-            fillOpacity: 0.3
-          };
-        }
-
-        function highlightFeature(e) {
-          var layer = e.target;
-          layer.setStyle({
-            weight: 4,
-            color: "yellow",      // hranica pri prechode myšou
-            fillColor: "orange",  // výplň pri prechode myšou
-            fillOpacity: 0.5
-          });
-        }
-
-        function resetHighlight(e) {
-          geojson.reset
+        L.geoJSON(data, {
+          style: {
+            color: "blue",     // ✅ modré hranice
+            weight: 2,         // hrúbka čiar
+            fillOpacity: 0     // ✅ žiadna výplň
+          }
+        }).addTo(map);
+      })
+      .catch(err => console.error("Chyba pri načítaní GeoJSON:", err));
+  </script>
+</body>
+</html>
