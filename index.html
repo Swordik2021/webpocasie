@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar – farebné zrážky bez oblačnosti</title>
+  <title>Základná mapa – Slovensko</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -15,84 +15,22 @@
     .leaflet-control-attribution {
       display: none;
     }
-    #controls {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.6);
-      padding: 10px 15px;
-      border-radius: 8px;
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 9999;
-    }
-    input[type=range] {
-      -webkit-appearance: none;
-      width: 350px;
-      height: 6px;
-      background: #1E90FF;
-      border-radius: 3px;
-      outline: none;
-      cursor: pointer;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      background: white;
-      border: 2px solid #1E90FF;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-    input[type=range]::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      background: white;
-      border: 2px solid #1E90FF;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-    #time {
-      font-weight: bold;
-      font-size: 15px;
-      min-width: 90px;
-      text-align: right;
-    }
-    button {
-      background: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    /* ✅ Odstránenie šedej oblačnosti - potlačíme priehľadné odtiene */
-    .leaflet-tile {
-      filter: contrast(180%) saturate(200%) brightness(110%);
-    }
   </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="controls">
-  <button id="play">▶</button>
-  <input type="range" id="slider" min="0" max="0" value="0">
-  <span id="time"></span>
-</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   const map = L.map('map', {zoomControl: false, attributionControl: false});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 14
+
+  // ✅ Sivší podklad (tmavší než základný)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd',
+    maxZoom: 14
   }).addTo(map);
 
-  // ✅ Modré hranice Slovenska
+  // ✅ Modré hranice Slovenska (GeoJSON)
   fetch("slovakia_Regions_level_1.geojson")
     .then(r => r.json())
     .then(data => {
@@ -100,65 +38,6 @@
         style: {color: "#00bfff", weight: 1.5, fillOpacity: 0}
       }).addTo(map);
       map.fitBounds(geo.getBounds().pad(0.25));
-    });
-
-  // ✅ Radar – prednačítanie snímok
-  let radarFrames = [];
-  let radarLayers = [];
-  let playInterval = null;
-
-  const slider = document.getElementById("slider");
-  const timeLabel = document.getElementById("time");
-  const playBtn = document.getElementById("play");
-
-  fetch("https://api.rainviewer.com/public/weather-maps.json")
-    .then(r => r.json())
-    .then(data => {
-      radarFrames = [...data.radar.past, ...data.radar.nowcast];
-      slider.max = radarFrames.length - 1;
-      slider.value = radarFrames.length - 1;
-
-      radarFrames.forEach((frame, i) => {
-        const layer = L.tileLayer(
-          `https://tilecache.rainviewer.com/v2/radar/${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
-          {opacity: 0}
-        ).addTo(map);
-        radarLayers[i] = layer;
-      });
-
-      showFrame(slider.value);
-
-      slider.addEventListener("input", () => {
-        clearInterval(playInterval);
-        playInterval = null;
-        playBtn.innerText = "▶";
-        showFrame(slider.value);
-      });
-
-      playBtn.addEventListener("click", () => {
-        if (playInterval) {
-          clearInterval(playInterval);
-          playInterval = null;
-          playBtn.innerText = "▶";
-        } else {
-          playBtn.innerText = "⏸";
-          playInterval = setInterval(() => {
-            slider.value = (parseInt(slider.value) + 1) % radarFrames.length;
-            showFrame(slider.value);
-          }, 500);
-        }
-      });
-
-      function showFrame(index) {
-        radarLayers.forEach((layer, i) => {
-          layer.setOpacity(i === parseInt(index) ? 0.8 : 0);
-        });
-
-        const t = new Date(radarFrames[index].time * 1000);
-        timeLabel.innerText =
-          t.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) +
-          " " + t.toLocaleDateString();
-      }
     });
 </script>
 </body>
