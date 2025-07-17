@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – profi radar (Canvas)</title>
+  <title>Slovensko – radar na vlastnom Canvas</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -26,13 +26,13 @@
       attributionControl: false
     });
 
-    // ✅ Tmavý podklad
+    // Tmavý podklad
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 12
     }).addTo(map);
 
-    // ✅ Hranice Slovenska
+    // Hranice Slovenska
     fetch("slovakia_Regions_level_1.geojson")
       .then(response => response.json())
       .then(data => {
@@ -43,66 +43,18 @@
             fillOpacity: 0
           }
         }).addTo(map);
-
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // ✅ Funkcia na vlastnú farebnú paletu podľa intenzity
+    // Funkcia na vlastné farby
     function getColor(value) {
-      return value > 200 ? '#ff0000' :    // červená (silné zrážky)
-             value > 100 ? '#ff8000' :    // oranžová
-             value > 50  ? '#ffff00' :    // žltá
-             value > 20  ? '#00ff00' :    // zelená
-             value > 5   ? '#00bfff' :    // modrá
-                          'transparent';  // žiadna zrážka
+      return value > 200 ? '#ff0000' :   // červená
+             value > 120 ? '#ff6600' :   // oranžová
+             value > 60  ? '#00ffff' :   // tyrkysová
+             value > 20  ? '#0000ff' :   // modrá
+                          'transparent';
     }
 
-    // ✅ Načítanie radarových tiles a prekreslenie na Canvas
-    fetch("https://api.rainviewer.com/public/weather-maps.json")
-      .then(response => response.json())
-      .then(data => {
-        let lastRadar = data.radar.past[data.radar.past.length - 1];
-
-        // Nahráme originálne tiles (1_0 = bez rozmazania)
-        var radarLayer = L.tileLayer.canvas({ zIndex: 10 });
-
-        radarLayer.drawTile = function(canvas, tilePoint, zoom) {
-          var ctx = canvas.getContext('2d');
-          var img = new Image();
-          img.crossOrigin = "Anonymous";
-
-          img.onload = function() {
-            ctx.drawImage(img, 0, 0);
-
-            // Čítanie pixelov a prefarbovanie
-            var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            for (var i = 0; i < imgData.data.length; i += 4) {
-              var r = imgData.data[i];
-              var g = imgData.data[i + 1];
-              var b = imgData.data[i + 2];
-              var intensity = Math.max(r, g, b); // odhad intenzity z pôvodného PNG
-
-              var newColor = getColor(intensity);
-              if (newColor !== 'transparent') {
-                let rgb = hexToRgb(newColor);
-                imgData.data[i] = rgb.r;
-                imgData.data[i + 1] = rgb.g;
-                imgData.data[i + 2] = rgb.b;
-                imgData.data[i + 3] = 200; // priehľadnosť
-              } else {
-                imgData.data[i + 3] = 0; // úplná priehľadnosť
-              }
-            }
-            ctx.putImageData(imgData, 0, 0);
-          };
-
-          img.src = `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/${zoom}/${tilePoint.x}/${tilePoint.y}/2/1_0.png`;
-        };
-
-        radarLayer.addTo(map);
-      });
-
-    // Pomocná funkcia na konverziu HEX na RGB
     function hexToRgb(hex) {
       var bigint = parseInt(hex.slice(1), 16);
       return {
@@ -111,6 +63,53 @@
         b: bigint & 255
       };
     }
+
+    // ✅ Canvas Overlay
+    fetch("https://api.rainviewer.com/public/weather-maps.json")
+      .then(response => response.json())
+      .then(data => {
+        let lastRadar = data.radar.past[data.radar.past.length - 1];
+
+        var radarLayer = L.tileLayer('', {
+          opacity: 0.8
+        });
+
+        radarLayer.createTile = function(coords) {
+          var tile = document.createElement('canvas');
+          var size = this.getTileSize();
+          tile.width = size.x;
+          tile.height = size.y;
+          var ctx = tile.getContext('2d');
+
+          var img = new Image();
+          img.crossOrigin = "Anonymous";
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+            var imgData = ctx.getImageData(0, 0, size.x, size.y);
+
+            for (let i = 0; i < imgData.data.length; i += 4) {
+              let intensity = Math.max(imgData.data[i], imgData.data[i + 1], imgData.data[i + 2]);
+              let newColor = getColor(intensity);
+
+              if (newColor === 'transparent') {
+                imgData.data[i + 3] = 0;
+              } else {
+                let rgb = hexToRgb(newColor);
+                imgData.data[i] = rgb.r;
+                imgData.data[i + 1] = rgb.g;
+                imgData.data[i + 2] = rgb.b;
+                imgData.data[i + 3] = 200;
+              }
+            }
+            ctx.putImageData(imgData, 0, 0);
+          };
+
+          img.src = `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/${coords.z}/${coords.x}/${coords.y}/2/1_0.png`;
+          return tile;
+        };
+
+        radarLayer.addTo(map);
+      });
   </script>
 </body>
 </html>
