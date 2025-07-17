@@ -19,7 +19,7 @@
     }).addTo(map);
 
     // ✅ Načítanie tvojho lokálneho GeoJSON súboru
-    fetch('slovakia_Districts_level_2.geojson')
+    fetch('slovakia_Regions_level_1.geojson')
       .then(r => {
         if (!r.ok) throw new Error('Chyba načítania GeoJSON');
         return r.json();
