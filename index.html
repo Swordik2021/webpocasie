@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Slovensko – radar bez halo</title>
+  <title>Slovensko – radar s farbami RainViewer</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -46,13 +46,15 @@
         map.fitBounds(geoLayer.getBounds());
       });
 
-    // Vlastné farby podľa intenzity
+    // ✅ Presná paleta RainViewer
     function getColor(value) {
-      return value > 200 ? '#ff0000' :   // červená
-             value > 120 ? '#ff6600' :   // oranžová
-             value > 60  ? '#00ffff' :   // tyrkysová
-             value > 20  ? '#0000ff' :   // modrá
-                          'transparent';
+      return value > 100 ? '#c800ff' :  // fialová
+             value > 80  ? '#ff0000' :  // červená
+             value > 60  ? '#ff9000' :  // oranžová
+             value > 40  ? '#ffd800' :  // žltá
+             value > 20  ? '#28a745' :  // zelená
+             value > 5   ? '#a3f600' :  // svetlozelená
+                           'transparent';
     }
 
     function hexToRgb(hex) {
@@ -90,19 +92,14 @@
             for (let i = 0; i < imgData.data.length; i += 4) {
               let intensity = Math.max(imgData.data[i], imgData.data[i + 1], imgData.data[i + 2]);
 
-              if (intensity < 20) {
-                imgData.data[i + 3] = 0; // ✅ úplne priehľadné (žiadne halo)
+              if (intensity < 5) {
+                imgData.data[i + 3] = 0; // úplne priehľadné slabé halo
               } else {
-                let newColor = getColor(intensity);
-                if (newColor !== 'transparent') {
-                  let rgb = hexToRgb(newColor);
-                  imgData.data[i] = rgb.r;
-                  imgData.data[i + 1] = rgb.g;
-                  imgData.data[i + 2] = rgb.b;
-                  imgData.data[i + 3] = 220; // mierne priehľadné
-                } else {
-                  imgData.data[i + 3] = 0;
-                }
+                let rgb = hexToRgb(getColor(intensity));
+                imgData.data[i] = rgb.r;
+                imgData.data[i + 1] = rgb.g;
+                imgData.data[i + 2] = rgb.b;
+                imgData.data[i + 3] = 220; // priehľadnosť
               }
             }
             ctx.putImageData(imgData, 0, 0);
