@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Radar na tmavej mape</title>
+  <title>Radar – Dážď a Sneh zvlášť</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     html, body, #map {
@@ -26,7 +26,7 @@
     attributionControl: false
   });
 
-  // ✅ Čierna mapa
+  // ✅ Tmavý podklad
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     subdomains: 'abcd',
     maxZoom: 12
@@ -46,21 +46,110 @@
       map.fitBounds(geoLayer.getBounds());
     });
 
-  // ✅ Radar originál RainViewer (bez úprav farieb)
+  // ✅ Paleta dažďa
+  const rainColors = [
+    [0,   0,   0,   0],      // transparent
+    [0, 200,   0, 200],      // slabý (zelená)
+    [150,255,   0, 220],     // mierny (žltozelená)
+    [255,255,   0, 230],     // stredný (žltá)
+    [255,165,   0, 240],     // silný (oranžová)
+    [255,  0,   0, 250],     // búrky (červená)
+    [150,  0,  50, 255]      // extrém (bordová)
+  ];
+
+  // ✅ Paleta snehu
+  const snowColors = [
+    [0,   0,   0,   0],      // transparent
+    [204,242,255,200],       // slabý (svetlomodrá)
+    [51, 153,255,220],       // stredný (modrá)
+    [0,  51,204,240]         // silný (tmavomodrá)
+  ];
+
+  function getRainColor(value) {
+    return rainColors[Math.min(value, rainColors.length - 1)];
+  }
+  function getSnowColor(value) {
+    return snowColors[Math.min(value, snowColors.length - 1)];
+  }
+
+  // ✅ Radar a sneh
   fetch("https://api.rainviewer.com/public/weather-maps.json")
     .then(response => response.json())
     .then(data => {
       let radarFrames = data.radar.past;
-      if (radarFrames.length === 0) {
-        console.warn("Radar nie je dostupný.");
-        return;
-      }
+      if (radarFrames.length === 0) return;
       let lastRadar = radarFrames[radarFrames.length - 1];
 
-      L.tileLayer(
-        `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/{z}/{x}/{y}/2/1_1.png`,
-        {opacity: 0.8, zIndex: 10}
-      ).addTo(map);
+      // Dážď – prefarbovanie
+      var rainLayer = L.tileLayer('', {opacity: 0.9});
+      rainLayer.createTile = function(coords) {
+        var tile = document.createElement('canvas');
+        var size = this.getTileSize();
+        tile.width = size.x;
+        tile.height = size.y;
+        var ctx = tile.getContext('2d');
+
+        var img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0);
+          var imgData = ctx.getImageData(0, 0, size.x, size.y);
+          for (let i = 0; i < imgData.data.length; i += 4) {
+            let intensity = Math.floor(imgData.data[i] / 32);
+            if (intensity === 0) {
+              imgData.data[i + 3] = 0;
+            } else {
+              let c = getRainColor(intensity);
+              imgData.data[i] = c[0];
+              imgData.data[i + 1] = c[1];
+              imgData.data[i + 2] = c[2];
+              imgData.data[i + 3] = c[3];
+            }
+          }
+          ctx.putImageData(imgData, 0, 0);
+        };
+        img.src = `https://tilecache.rainviewer.com/v2/radar/${lastRadar.path}/256/${coords.z}/${coords.x}/${coords.y}/2/1_0.png`;
+        return tile;
+      };
+
+      rainLayer.addTo(map);
+
+      // Sneh (RainViewer poskytuje ako snowcover radar, ak je dostupný)
+      if (data.snow && data.snow.past.length > 0) {
+        let lastSnow = data.snow.past[data.snow.past.length - 1];
+        var snowLayer = L.tileLayer('', {opacity: 0.9});
+        snowLayer.createTile = function(coords) {
+          var tile = document.createElement('canvas');
+          var size = this.getTileSize();
+          tile.width = size.x;
+          tile.height = size.y;
+          var ctx = tile.getContext('2d');
+
+          var img = new Image();
+          img.crossOrigin = "Anonymous";
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+            var imgData = ctx.getImageData(0, 0, size.x, size.y);
+            for (let i = 0; i < imgData.data.length; i += 4) {
+              let intensity = Math.floor(imgData.data[i] / 85); // 0-3
+              if (intensity === 0) {
+                imgData.data[i + 3] = 0;
+              } else {
+                let c = getSnowColor(intensity);
+                imgData.data[i] = c[0];
+                imgData.data[i + 1] = c[1];
+                imgData.data[i + 2] = c[2];
+                imgData.data[i + 3] = c[3];
+              }
+            }
+            ctx.putImageData(imgData, 0, 0);
+          };
+          img.src = `https://tilecache.rainviewer.com/v2/snow/${lastSnow.path}/256/${coords.z}/${coords.x}/${coords.y}/2/1_0.png`;
+          return tile;
+        };
+
+        snowLayer.addTo(map);
+      }
     });
 </script>
 </body>
